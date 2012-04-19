@@ -95,6 +95,7 @@ public class ContainerManagerDSpace extends DSpaceSwordAPI implements ContainerM
 
 			ReceiptGenerator genny = new ReceiptGenerator();
 			DepositReceipt receipt = genny.createReceipt(context, item, config);
+			sc.abort();
 			return receipt;
 		}
 		catch (DSpaceSwordException e)

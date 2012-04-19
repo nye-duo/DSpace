@@ -44,9 +44,9 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
     public MediaResource getMediaResourceRepresentation(String uri, Map<String, String> accept, AuthCredentials authCredentials, SwordConfiguration swordConfig)
             throws SwordError, SwordServerException, SwordAuthException
     {
+		SwordContext sc = null;
         try
         {
-            SwordContext sc = null;
             SwordConfigurationDSpace config = (SwordConfigurationDSpace) swordConfig;
 
             SwordAuthenticator auth = new SwordAuthenticator();
@@ -122,6 +122,7 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
 				// be null, and the disseminator is free to choose the format
 				InputStream stream = disseminator.disseminate(context, item);
 				MediaResource mr = new MediaResource(stream, disseminator.getContentType(), disseminator.getPackaging());
+				sc.abort();
 				return mr;
 			}
         }
@@ -141,6 +142,13 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
 		{
 			throw new SwordServerException(e);
 		}
+		finally
+        {
+            if (sc != null)
+            {
+                sc.abort();
+            }
+        }
     }
 
     private Date getLastModified(Context context, Bitstream bitstream)

@@ -567,9 +567,35 @@ public class SwordUrlManager
 	}
 
 	public String getSplashUrl(Item item)
+			throws DSpaceSwordException
 	{
-        // FIXME: this appears not to return the item's handle
-		return HandleManager.getCanonicalForm(item.getHandle());
+		WorkflowTools wft = new WorkflowTools();
+
+        // if the item is in the workspace, we need to give it it's own
+        // special identifier
+        if (wft.isItemInWorkspace(context, item))
+        {
+            String urlTemplate = ConfigurationManager.getProperty("swordv2-server", "workspace.url-template");
+            if (urlTemplate != null)
+            {
+                return urlTemplate.replace("#wsid#", Integer.toString(wft.getWorkspaceItem(context, item).getID()));
+            }
+        }
+        // otherwise, it may be in the workflow, in which case there is
+        // no identifier
+        else if (wft.isItemInWorkflow(context, item))
+        {
+            // do nothing
+            return null;
+        }
+        // finally, otherwise we need to just return the handle of the
+        // item
+        else
+        {
+            // FIXME: this appears not to return the item's handle
+		    return HandleManager.getCanonicalForm(item.getHandle());
+        }
+        return null;
 	}
 
 	public IRI getContentUrl(Item item)

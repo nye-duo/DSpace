@@ -6,4 +6,10 @@ dspace/modules/solr/target
 dspace/modules/sword/target
 dspace/modules/swordv2/target
 dspace/modules/xmlui/target
+.idea/
+*.iml
+dspace-swordv2/overlays/
+dspace/modules/solr/overlays/
+dspace/modules/swordv2/overlays/
+dspace/modules/xmlui/overlays/
 
