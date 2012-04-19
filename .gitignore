@@ -1,0 +1,9 @@
+dspace/target
+dspace/modules/jspui/target
+dspace/modules/lni/target
+dspace/modules/oai/target
+dspace/modules/solr/target
+dspace/modules/sword/target
+dspace/modules/swordv2/target
+dspace/modules/xmlui/target
+
