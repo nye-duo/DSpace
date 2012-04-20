@@ -20,17 +20,17 @@ import org.swordapp.server.Deposit;
 import org.swordapp.server.SwordAuthException;
 import org.swordapp.server.SwordError;
 import org.swordapp.server.SwordServerException;
+import org.swordapp.server.UriRegistry;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 public class SimpleZipContentIngester extends AbstractSwordContentIngester
@@ -142,7 +142,7 @@ public class SimpleZipContentIngester extends AbstractSwordContentIngester
     }
 
 	private List<Bitstream> unzipToBundle(Context context, File depositFile, Bundle target)
-			throws DSpaceSwordException, SwordAuthException
+			throws DSpaceSwordException, SwordError, SwordAuthException
 	{
 		try
 		{
@@ -164,6 +164,10 @@ public class SimpleZipContentIngester extends AbstractSwordContentIngester
 			}
 
 			return derivedResources;
+		}
+		catch (ZipException e)
+		{
+			throw new SwordError(UriRegistry.ERROR_BAD_REQUEST, "unable to unzip provided package", e);
 		}
 		catch (IOException e)
 		{

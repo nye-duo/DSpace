@@ -12,6 +12,10 @@ dspace-swordv2/overlays/
 dspace/modules/solr/overlays/
 dspace/modules/swordv2/overlays/
 dspace/modules/xmlui/overlays/
+dspace/modules/jspui/overlays/
+dspace/modules/lni/overlays/
+dspace/modules/oai/overlays/
+dspace/modules/sword/overlays/
 dspace-api/target/
 dspace-discovery/dspace-discovery-provider/target/
 dspace-discovery/dspace-discovery-solr/target/
