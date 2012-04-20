@@ -79,7 +79,7 @@ public class BinaryContentIngester extends AbstractSwordContentIngester
 
 			// now we have an item in the workspace, and we need to consider adding some metadata to it,
 			// but since the binary file didn't contain anything, what do we do?
-			item.addMetadata("dc", "title", null, null, "Unititled: " + deposit.getFilename());
+			item.addMetadata("dc", "title", null, null, "Untitled: " + deposit.getFilename());
 			item.addMetadata("dc", "description", null, null, "Zip file deposted by SWORD without accompanying metadata");
 
 			// update the item metadata to inclue the current time as
