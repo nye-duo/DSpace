@@ -114,6 +114,7 @@
         <!--
            Builds DSpace Solr Stats for DSpace
         -->
+<!--
         <profile>
             <id>dspace-stats</id>
             <activation>
@@ -123,6 +124,7 @@
                 <module>dspace-stats</module>
             </modules>
         </profile>
+-->
 
         <!--
             Builds DSpace discovery for DSpace
@@ -140,6 +142,7 @@
         <!--
            Builds OAI Gateway WAR for DSpace
         -->
+<!--
         <profile>
             <id>dspace-oai</id>
             <activation>
@@ -149,10 +152,12 @@
                 <module>dspace-oai</module>
             </modules>
         </profile>
+-->
 
         <!--
            Builds JSPUI WAR for DSpace
         -->
+<!--
         <profile>
 
             <id>dspace-jspui</id>
@@ -163,11 +168,12 @@
                 <module>dspace-jspui</module>
             </modules>
         </profile>
-
+-->
 
         <!--
            Builds SWORD WAR for DSpace
         -->
+<!--
         <profile>
             <id>dspace-sword</id>
             <activation>
@@ -177,6 +183,7 @@
                 <module>dspace-sword</module>
             </modules>
         </profile>
+-->
 
         <!--
            Builds SWORDv2 WAR for DSpace
@@ -194,6 +201,7 @@
         <!--
            Builds DSpace Sword Client from local source if present
         -->
+<!--
         <profile>
             <id>dspace-sword-client</id>
             <activation>
@@ -203,6 +211,7 @@
                 <module>dspace-sword-client</module>
             </modules>
         </profile>
+-->
 
         <!--
            Builds XMLUI WAR for DSpace
@@ -220,6 +229,7 @@
         <!--
            Builds LNI WAR for DSpace
         -->
+<!--
         <profile>
             <id>dspace-lni</id>
             <activation>
@@ -229,7 +239,7 @@
                 <module>dspace-lni</module>
             </modules>
         </profile>
-
+-->
 
       <!--
          Use 'mvn deploy -Paddons' while doing Continuous Integration

@@ -12,4 +12,17 @@ dspace-swordv2/overlays/
 dspace/modules/solr/overlays/
 dspace/modules/swordv2/overlays/
 dspace/modules/xmlui/overlays/
+dspace-api/target/
+dspace-discovery/dspace-discovery-provider/target/
+dspace-discovery/dspace-discovery-solr/target/
+dspace-discovery/dspace-discovery-xmlui-api/target/
+dspace-discovery/dspace-discovery-xmlui-webapp/target/
+dspace-stats/target/
+dspace-sword-client/dspace-sword-client-api/target/
+dspace-sword-client/dspace-sword-client-xmlui-api/target/
+dspace-sword/dspace-sword-api/target/
+dspace-swordv2/target/
+dspace-xmlui/dspace-xmlui-api/target/
+dspace-xmlui/dspace-xmlui-webapp/target/
+dspace-xmlui/dspace-xmlui-wing/target/
 
