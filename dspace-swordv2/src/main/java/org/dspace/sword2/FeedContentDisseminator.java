@@ -18,14 +18,18 @@ import org.dspace.content.Item;
 import org.dspace.core.*;
 import org.swordapp.server.SwordError;
 import org.swordapp.server.SwordServerException;
+import org.swordapp.server.UriRegistry;
 
+import javax.xml.namespace.QName;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
+import java.util.Date;
+import java.util.Map;
 
-public class FeedContentDisseminator implements SwordContentDisseminator
+public class FeedContentDisseminator extends AbstractDCDisseminator implements SwordContentDisseminator
 {
     public InputStream disseminate(Context context, Item item)
             throws DSpaceSwordException, SwordError, SwordServerException
@@ -34,6 +38,8 @@ public class FeedContentDisseminator implements SwordContentDisseminator
         {
             Abdera abdera = new Abdera();
             Feed feed = abdera.newFeed();
+
+            this.addMetadata(feed, item);
 
             Bundle[] originals = item.getBundles("ORIGINAL");
             for (Bundle original : originals)
@@ -61,6 +67,35 @@ public class FeedContentDisseminator implements SwordContentDisseminator
         }
     }
 
+    private void addMetadata(Feed feed, Item item)
+    {
+        SimpleDCMetadata md = this.getMetadata(item);
+
+        /* not necessary ...
+        Map<String, String> dc = md.getDublinCore();
+        for (String element : dc.keySet())
+        {
+            String value = dc.get(element);
+            feed.addSimpleExtension(new QName(UriRegistry.DC_NAMESPACE, element), value);
+        }
+        */
+
+        Map<String, String> atom = md.getAtom();
+        for (String element : atom.keySet())
+        {
+            if ("author".equals(element))
+            {
+                feed.addAuthor(atom.get(element));
+            }
+        }
+
+        // ensure that the feed has one author or more
+        if (feed.getAuthors().size() == 0)
+        {
+            feed.addAuthor(ConfigurationManager.getProperty("dspace.name"));
+        }
+    }
+
     private void populateEntry(Context context, Entry entry, Bitstream bitstream)
             throws DSpaceSwordException
     {
@@ -71,13 +106,20 @@ public class FeedContentDisseminator implements SwordContentDisseminator
             contentType = format.getMIMEType();
         }
 
-        entry.setTitle(bitstream.getName());
-        entry.setSummary(bitstream.getDescription());
-
         SwordUrlManager urlManager = new SwordUrlManager(new SwordConfigurationDSpace(), context);
+        String bsUrl = urlManager.getBitstreamUrl(bitstream);
+
+        entry.setId(bsUrl);
+        entry.setTitle(bitstream.getName());
+        String desc = bitstream.getDescription();
+        if ("".equals(desc) || desc == null)
+        {
+            desc = bitstream.getName();
+        }
+        entry.setSummary(desc);
+        entry.setUpdated(new Date()); // required, though content is spurious
 
         // set the content of the bitstream
-        String bsUrl = urlManager.getBitstreamUrl(bitstream);
         entry.setContent(new IRI(bsUrl), contentType);
     }
 

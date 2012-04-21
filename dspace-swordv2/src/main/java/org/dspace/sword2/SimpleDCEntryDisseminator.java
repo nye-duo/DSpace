@@ -19,64 +19,59 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-public class SimpleDCEntryDisseminator implements SwordEntryDisseminator
+public class SimpleDCEntryDisseminator extends AbstractDCDisseminator implements SwordEntryDisseminator
 {
-    private Map<String, String> dcMap = null;
-
     public SimpleDCEntryDisseminator() { }
-
-    private void loadDCMap()
-    {
-        if (this.dcMap != null)
-        {
-            return;
-        }
-
-        // we should load our DC map from configuration
-        this.dcMap = new HashMap<String, String>();
-        Properties props = ConfigurationManager.getProperties("swordv2-server");
-        for (Object key : props.keySet())
-        {
-            String keyString = (String) key;
-            if (keyString.startsWith("simpledc."))
-            {
-                String k = keyString.substring("simpledc.".length());
-                String v = (String) props.get(key);
-                this.dcMap.put(k, v);
-            }
-        }
-    }
 
     public DepositReceipt disseminate(Context context, Item item, DepositReceipt receipt)
             throws DSpaceSwordException, SwordError, SwordServerException
     {
-        this.loadDCMap();
+        SimpleDCMetadata md = this.getMetadata(item);
 
-        DCValue[] all = item.getMetadata(Item.ANY, Item.ANY, Item.ANY, Item.ANY);
-
-        for (DCValue dcv : all)
+        Map<String, String> dc = md.getDublinCore();
+        for (String element : dc.keySet())
         {
-            String valueMatch = dcv.schema + "." + dcv.element;
-            if (dcv.qualifier != null)
+            String value = dc.get(element);
+            receipt.addDublinCore(element, value);
+        }
+
+        /*
+        atom.author = dc.contributor.author
+        atom.published = dc.date.created
+        atom.rights = dc.rights
+        atom.summary = dc.description.abstract
+        atom.title = dc.title
+        atom.updated = dc.date.created
+        */
+
+        Map<String, String> atom = md.getAtom();
+        for (String element : atom.keySet())
+        {
+            String value = atom.get(element);
+            if ("author".equals(element))
             {
-                valueMatch += "." + dcv.qualifier;
+               receipt.getWrappedEntry().addAuthor(value);
             }
-             for (String key : this.dcMap.keySet())
-             {
-                 String value = this.dcMap.get(key);
-                 if (valueMatch.equals(value))
-                 {
-                     receipt.addDublinCore(key, dcv.value);
-                     if (key.equals("title"))
-                     {
-                         receipt.getWrappedEntry().setTitle(dcv.value);
-                     }
-                     if (key.equals("abstract"))
-                     {
-                         receipt.getWrappedEntry().setSummary(dcv.value);
-                     }
-                 }
-             }
+            else if ("published".equals(element))
+            {
+                receipt.getWrappedEntry().setPublished(value);
+            }
+            else if ("rights".equals(element))
+            {
+                receipt.getWrappedEntry().setRights(value);
+            }
+            else if ("summary".equals(element))
+            {
+                receipt.getWrappedEntry().setSummary(value);
+            }
+            else if ("title".equals(element))
+            {
+                receipt.getWrappedEntry().setTitle(value);
+            }
+            else if ("updated".equals(element))
+            {
+                receipt.getWrappedEntry().setUpdated(value);
+            }
         }
 
         return receipt;

@@ -14,6 +14,7 @@ import org.dspace.content.DSpaceObject;
 import org.dspace.content.Item;
 import org.dspace.core.ConfigurationManager;
 import org.dspace.core.Context;
+import org.dspace.core.PluginManager;
 import org.jaxen.function.FalseFunction;
 import org.swordapp.server.SwordConfiguration;
 import org.swordapp.server.SwordError;
@@ -216,6 +217,7 @@ public class SwordConfigurationDSpace implements SwordConfiguration
 	}
 
 	public List<String> getDisseminatePackaging()
+            throws DSpaceSwordException, SwordError
 	{
 		List<String> dps = new ArrayList<String>();
 		Properties props = ConfigurationManager.getProperties("swordv2-server");
@@ -237,7 +239,23 @@ public class SwordConfigurationDSpace implements SwordConfiguration
             }
 
 			String value = props.getProperty((key));
-			dps.add(value);
+
+            // now we want to ensure that the packaging format we offer has a disseminator
+            // associated with it
+            boolean disseminable = true;
+            try
+            {
+                SwordContentDisseminator disseminator = SwordDisseminatorFactory.getContentInstance(null, value);
+            }
+            catch (SwordError e)
+            {
+                disseminable = false;
+            }
+
+            if (disseminable)
+            {
+			    dps.add(value);
+            }
 		}
 		return dps;
 	}
