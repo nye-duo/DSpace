@@ -21,19 +21,26 @@ import java.util.Properties;
 
 public class SimpleDCEntryDisseminator implements SwordEntryDisseminator
 {
-    private Map<String, String> dcMap;
+    private Map<String, String> dcMap = null;
 
-    public SimpleDCEntryDisseminator()
+    public SimpleDCEntryDisseminator() { }
+
+    private void loadDCMap()
     {
+        if (this.dcMap != null)
+        {
+            return;
+        }
+
         // we should load our DC map from configuration
         this.dcMap = new HashMap<String, String>();
-        Properties props = ConfigurationManager.getProperties();
+        Properties props = ConfigurationManager.getProperties("swordv2-server");
         for (Object key : props.keySet())
         {
             String keyString = (String) key;
-            if (keyString.startsWith("sword2.simpledc."))
+            if (keyString.startsWith("simpledc."))
             {
-                String k = keyString.substring("sword2.simpledc.".length());
+                String k = keyString.substring("simpledc.".length());
                 String v = (String) props.get(key);
                 this.dcMap.put(k, v);
             }
@@ -43,6 +50,8 @@ public class SimpleDCEntryDisseminator implements SwordEntryDisseminator
     public DepositReceipt disseminate(Context context, Item item, DepositReceipt receipt)
             throws DSpaceSwordException, SwordError, SwordServerException
     {
+        this.loadDCMap();
+
         DCValue[] all = item.getMetadata(Item.ANY, Item.ANY, Item.ANY, Item.ANY);
 
         for (DCValue dcv : all)
