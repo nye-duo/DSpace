@@ -341,8 +341,8 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
                 // now we've produced a deposit, we need to decide on its workflow state
                 wfm.resolveState(context, deposit, null, this.verboseDescription, false);
 
-                // ReceiptGenerator genny = new ReceiptGenerator();
-                // DepositReceipt receipt = genny.createReceipt(context, result, config);
+                ReceiptGenerator genny = new ReceiptGenerator();
+                receipt = genny.createMediaResourceReceipt(context, item, config);
             }
 
             Date finish = new Date();

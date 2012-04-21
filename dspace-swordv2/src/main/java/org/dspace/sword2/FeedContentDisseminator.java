@@ -11,6 +11,7 @@ import org.apache.abdera.Abdera;
 import org.apache.abdera.i18n.iri.IRI;
 import org.apache.abdera.model.Entry;
 import org.apache.abdera.model.Feed;
+import org.apache.abdera.model.Link;
 import org.dspace.content.Bitstream;
 import org.dspace.content.BitstreamFormat;
 import org.dspace.content.Bundle;
@@ -118,6 +119,14 @@ public class FeedContentDisseminator extends AbstractDCDisseminator implements S
         }
         entry.setSummary(desc);
         entry.setUpdated(new Date()); // required, though content is spurious
+
+        // add an edit-media link for the bitstream ...
+        Abdera abdera = new Abdera();
+        Link link = abdera.getFactory().newLink();
+        link.setHref(urlManager.getActionableBitstreamUrl(bitstream));
+        link.setMimeType(contentType);
+        link.setRel("edit-media");
+        entry.addLink(link);
 
         // set the content of the bitstream
         entry.setContent(new IRI(bsUrl), contentType);
