@@ -19,9 +19,7 @@ import org.dspace.content.Item;
 import org.dspace.core.*;
 import org.swordapp.server.SwordError;
 import org.swordapp.server.SwordServerException;
-import org.swordapp.server.UriRegistry;
 
-import javax.xml.namespace.QName;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,7 +28,7 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.Map;
 
-public class FeedContentDisseminator extends AbstractDCDisseminator implements SwordContentDisseminator
+public class FeedContentDisseminator extends AbstractSimpleDC implements SwordContentDisseminator
 {
     public InputStream disseminate(Context context, Item item)
             throws DSpaceSwordException, SwordError, SwordServerException

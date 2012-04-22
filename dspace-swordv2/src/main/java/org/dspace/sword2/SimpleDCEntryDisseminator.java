@@ -7,19 +7,15 @@
  */
 package org.dspace.sword2;
 
-import org.dspace.content.DCValue;
 import org.dspace.content.Item;
-import org.dspace.core.ConfigurationManager;
 import org.dspace.core.Context;
 import org.swordapp.server.DepositReceipt;
 import org.swordapp.server.SwordError;
 import org.swordapp.server.SwordServerException;
 
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
-public class SimpleDCEntryDisseminator extends AbstractDCDisseminator implements SwordEntryDisseminator
+public class SimpleDCEntryDisseminator extends AbstractSimpleDC implements SwordEntryDisseminator
 {
     public SimpleDCEntryDisseminator() { }
 

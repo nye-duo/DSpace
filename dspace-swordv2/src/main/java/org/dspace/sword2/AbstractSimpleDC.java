@@ -7,7 +7,7 @@ import org.dspace.core.ConfigurationManager;
 import java.util.HashMap;
 import java.util.Properties;
 
-public class AbstractDCDisseminator
+public class AbstractSimpleDC
 {
     protected HashMap<String, String> dcMap = null;
     protected HashMap<String, String> atomMap = null;

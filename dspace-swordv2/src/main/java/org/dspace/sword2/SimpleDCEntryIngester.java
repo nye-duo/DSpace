@@ -24,31 +24,18 @@ import org.swordapp.server.SwordServerException;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-public class SimpleDCEntryIngester implements SwordEntryIngester
+public class SimpleDCEntryIngester extends AbstractSimpleDC implements SwordEntryIngester
 {
-    private Map<String, String> dcMap;
-
 	public SimpleDCEntryIngester()
     {
-        // we should load our DC map from configuration
-        this.dcMap = new HashMap<String, String>();
-        Properties props = ConfigurationManager.getProperties("swordv2-server");
-        for (Object key : props.keySet())
-        {
-            String keyString = (String) key;
-            if (keyString.startsWith("simpledc."))
-            {
-                String k = keyString.substring("simpledc.".length());
-                String v = (String) props.get(key);
-                this.dcMap.put(k, v);
-            }
-        }
+        this.loadMetadataMaps();
     }
 
 	public DepositResult ingest(Context context, Deposit deposit, DSpaceObject dso, VerboseDescription verboseDescription)
@@ -82,9 +69,8 @@ public class SimpleDCEntryIngester implements SwordEntryIngester
 			}
 			result.setItem(item);
 
-			// NOTE: this implementation does not remove pre-existing metadata, as that is actually
-			// rather hard to handle in DSpace (what do you do about provenance and other administrator
-			// added metadata?).  Instead "replace" does nothing different to "create new" or "add".
+			// clean out any existing item metadata which is allowed to be replaced
+            this.removeMetadata(item);
 
 			// add the metadata to the item
 			this.addMetadataToItem(deposit, item);
@@ -119,9 +105,23 @@ public class SimpleDCEntryIngester implements SwordEntryIngester
 		}
 	}
 
+    private void removeMetadata(Item item)
+            throws DSpaceSwordException
+    {
+        String raw = ConfigurationManager.getProperty("swordv2-server", "metadata.replaceable");
+        String[] parts = raw.split(",");
+        for (String part : parts)
+        {
+            DCValue dcv = this.makeDCValue(part.trim(), null);
+            item.clearMetadata(dcv.schema, dcv.element, dcv.qualifier, Item.ANY);
+        }
+    }
+
 	private void addMetadataToItem(Deposit deposit, Item item)
 			throws DSpaceSwordException
 	{
+
+
 		// now, go through and get the metadata from the EntryPart and put it in DSpace
 		SwordEntry se = deposit.getSwordEntry();
 
