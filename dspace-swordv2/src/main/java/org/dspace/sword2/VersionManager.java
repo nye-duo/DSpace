@@ -86,10 +86,10 @@ public class VersionManager
 	private Bundle archiveBitstream(Item item, Bitstream bitstream)
 			throws SQLException, AuthorizeException, IOException
 	{
-		String swordBundle = ConfigurationManager.getProperty("swordv2-server", "bundle.name");
+		String swordBundle = ConfigurationManager.getProperty("swordv2-server", "bundle.deleted");
 		if (swordBundle == null)
 		{
-			swordBundle = "SWORD";
+			swordBundle = "DELETED";
 		}
 		
 		Bundle[] swords = item.getBundles(swordBundle);

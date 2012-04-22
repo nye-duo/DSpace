@@ -145,7 +145,9 @@ public class BinaryContentIngester extends AbstractSwordContentIngester
 				original = item.createBundle("ORIGINAL");
 			}
 
-			Bitstream bs = item.createSingleBitstream(deposit.getInputStream());
+            Bitstream bs = original.createBitstream(deposit.getInputStream());
+            BitstreamFormat format = this.getFormat(context, deposit.getFilename());
+            bs.setFormat(format);
 			bs.setName(deposit.getFilename());
 			bs.update();
 

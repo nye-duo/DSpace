@@ -281,7 +281,7 @@ public class DSpaceSwordAPI
 
                     String fn = this.createEntryFilename(context, deposit, true);
                     entryBitstream.setName(fn);
-                    entryBitstream.setDescription("SWORD entry document");
+                    entryBitstream.setDescription("Original SWORD entry document");
 
                     BitstreamFormat bf = BitstreamFormat.findByMIMEType(context, "application/xml");
                     if (bf != null)
@@ -321,7 +321,7 @@ public class DSpaceSwordAPI
                     }
 
                     bitstream.setName(fn);
-                    bitstream.setDescription("SWORD deposit package");
+                    bitstream.setDescription("Orignal SWORD deposit file");
 
                     BitstreamFormat bf = BitstreamFormat.findByMIMEType(context, deposit.getMimeType());
                     if (bf != null)
@@ -336,7 +336,7 @@ public class DSpaceSwordAPI
                         // shouldn't mess with it
                         result.setOriginalDeposit(bitstream);
                     }
-                    verboseDescription.append("Original package stored as " + fn + ", in item bundle " + swordBundle);
+                    verboseDescription.append("Original deposit stored as " + fn + ", in item bundle " + swordBundle);
                 }
 
                 swordBundle.update();
