@@ -660,7 +660,7 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
 			Bundle[] originals = item.getBundles("ORIGINAL");
 			for (Bundle original : originals)
 			{
-				vm.emptyBundle(item, original);
+				vm.removeBundle(item, original);
 			}
 		}
 		catch (SQLException e)
@@ -722,7 +722,7 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
 			// delegate the to the version manager to get rid of any existing content and to version
 			// if if necessary
 			VersionManager vm = new VersionManager();
-			vm.emptyBundle(item, "ORIGINAL");
+			vm.removeBundle(item, "ORIGINAL");
 		}
 		catch (SQLException e)
 		{

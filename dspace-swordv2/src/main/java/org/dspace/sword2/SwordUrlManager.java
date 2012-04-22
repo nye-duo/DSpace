@@ -592,7 +592,6 @@ public class SwordUrlManager
         // item
         else
         {
-            // FIXME: this appears not to return the item's handle
 		    return HandleManager.getCanonicalForm(item.getHandle());
         }
         return null;

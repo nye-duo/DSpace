@@ -680,7 +680,7 @@ public class ContainerManagerDSpace extends DSpaceSwordAPI implements ContainerM
 			// delegate the to the version manager to get rid of any existing content and to version
 			// if if necessary
 			VersionManager vm = new VersionManager();
-			vm.emptyBundle(item, "ORIGINAL");
+			vm.removeBundle(item, "ORIGINAL");
 		}
 		catch (SQLException e)
 		{
