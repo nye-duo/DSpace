@@ -202,6 +202,10 @@ public class SwordUrlManager
 			}
 
 			DSpaceObject dso = HandleManager.resolveToObject(context, handle);
+            if (dso == null)
+            {
+                return null;
+            }
 
 			if (!(dso instanceof Collection))
 			{
@@ -282,7 +286,11 @@ public class SwordUrlManager
 				}
 
 				DSpaceObject dso = HandleManager.resolveToObject(context, url);
-				if (dso instanceof Collection || dso instanceof Community)
+                if (dso == null)
+                {
+                    return null;
+                }
+				else if (dso instanceof Collection || dso instanceof Community)
 				{
 					return dso;
 				}
@@ -488,57 +496,6 @@ public class SwordUrlManager
 			// log.error("Caught exception:", e);
 			throw new DSpaceSwordException("There was a problem resolving the collection", e);
 		}
-	}
-
-	/**
-	 * get the media link url for the given bitstream
-	 * 
-	 * @param bitstream
-	 * @return
-	 * @throws DSpaceSwordException
-	 */
-	public String getMediaLink(Bitstream bitstream)
-			throws DSpaceSwordException
-	{
-//		try
-//		{
-//			Bundle[] bundles = bitstream.getBundles();
-//			Bundle parent = null;
-//			if (bundles.length > 0)
-//			{
-//				parent = bundles[0];
-//			}
-//			else
-//			{
-//				throw new DSpaceSwordException("Encountered orphaned bitstream");
-//			}
-//
-//			Item[] items = parent.getItems();
-//			Item item;
-//			if (items.length > 0)
-//			{
-//				item = items[0];
-//			}
-//			else
-//			{
-//				throw new DSpaceSwordException("Encountered orphaned bundle");
-//			}
-//
-//			String itemUrl = this.getMediaLink(item);
-//			if (itemUrl.equals(this.getBaseMediaLinkUrl()))
-//			{
-//				return itemUrl;
-//			}
-//
-//			String bsUrl = itemUrl + "/bitstream/" + bitstream.getID();
-//
-//			return bsUrl;
-//		}
-//		catch (SQLException e)
-//		{
-//			throw new DSpaceSWORDException(e);
-//		}
-		return null;
 	}
 
 	// FIXME: we need a totally new kind of URL scheme; perhaps we write the identifier into the item

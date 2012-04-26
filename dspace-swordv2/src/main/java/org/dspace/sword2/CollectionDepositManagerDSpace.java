@@ -76,6 +76,10 @@ public class CollectionDepositManagerDSpace extends DSpaceSwordAPI implements Co
 
 			// get the deposit target
 			Collection collection = this.getDepositTarget(context, collectionUri, config);
+            if (collection == null)
+            {
+                throw new SwordError(404);
+            }
 
 			// Ensure that this method is allowed
 			WorkflowManager wfm = WorkflowManagerFactory.getInstance();
@@ -303,6 +307,10 @@ public class CollectionDepositManagerDSpace extends DSpaceSwordAPI implements Co
 
 		// get the target collection
 		Collection collection = urlManager.getCollection(context, depositUrl);
+        if (collection == null)
+        {
+            throw new SwordError(404);
+        }
 
 		this.verboseDescription.append("Performing deposit using deposit URL: " + depositUrl);
 

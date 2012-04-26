@@ -56,6 +56,10 @@ public class StatementManagerDSpace extends DSpaceSwordAPI implements StatementM
             // first thing is to figure out what we're being asked to work on
             SwordUrlManager urlManager = config.getUrlManager(context, config);
             Item item = urlManager.getItem(context, stateIRI);
+            if (item == null)
+            {
+                throw new SwordError(404);
+            }
 
 			// find out, now we know what we're being asked for, whether this is allowed
 			WorkflowManagerFactory.getInstance().retrieveStatement(context, item);

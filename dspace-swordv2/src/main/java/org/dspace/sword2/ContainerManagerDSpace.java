@@ -92,6 +92,10 @@ public class ContainerManagerDSpace extends DSpaceSwordAPI implements ContainerM
 			SwordUrlManager urlManager = config.getUrlManager(context, config);
 
 			Item item = urlManager.getItem(context, editIRI);
+            if (item == null)
+            {
+                throw new SwordError(404);
+            }
 
 			ReceiptGenerator genny = new ReceiptGenerator();
 			DepositReceipt receipt = genny.createReceipt(context, item, config);
@@ -136,6 +140,10 @@ public class ContainerManagerDSpace extends DSpaceSwordAPI implements ContainerM
 
             // get the deposit target
             Item item = this.getDSpaceTarget(context, editIRI, config);
+            if (item == null)
+            {
+                throw new SwordError(404);
+            }
 
 			// now we have the deposit target, we can determine whether this operation is allowed
 			// at all
@@ -259,6 +267,10 @@ public class ContainerManagerDSpace extends DSpaceSwordAPI implements ContainerM
 
 			// get the deposit target
             Item item = this.getDSpaceTarget(context, editIRI, config);
+            if (item == null)
+            {
+                throw new SwordError(404);
+            }
 
 			// Ensure that this method is allowed
 			WorkflowManager wfm = WorkflowManagerFactory.getInstance();
@@ -360,7 +372,7 @@ public class ContainerManagerDSpace extends DSpaceSwordAPI implements ContainerM
 	public DepositReceipt addMetadataAndResources(String s, Deposit deposit, AuthCredentials authCredentials, SwordConfiguration config)
 			throws SwordError, SwordServerException
 	{
-		return null;  //To change body of implemented methods use File | Settings | File Templates.
+		return null;
 	}
 
 	public DepositReceipt addMetadata(String editIRI, Deposit deposit, AuthCredentials authCredentials, SwordConfiguration swordConfig)
@@ -387,6 +399,10 @@ public class ContainerManagerDSpace extends DSpaceSwordAPI implements ContainerM
 
             // get the deposit target
             Item item = this.getDSpaceTarget(context, editIRI, config);
+            if (item == null)
+            {
+                throw new SwordError(404);
+            }
 
 			// now we have the deposit target, we can determine whether this operation is allowed
 			// at all
@@ -487,7 +503,7 @@ public class ContainerManagerDSpace extends DSpaceSwordAPI implements ContainerM
 	public DepositReceipt addResources(String s, Deposit deposit, AuthCredentials authCredentials, SwordConfiguration config)
 			throws SwordError, SwordServerException
 	{
-		return null;  //To change body of implemented methods use File | Settings | File Templates.
+		return null;
 	}
 
 	public void deleteContainer(String editIRI, AuthCredentials authCredentials, SwordConfiguration swordConfig)
@@ -514,6 +530,10 @@ public class ContainerManagerDSpace extends DSpaceSwordAPI implements ContainerM
 
             // get the deposit target
             Item item = this.getDSpaceTarget(context, editIRI, config);
+            if (item == null)
+            {
+                throw new SwordError(404);
+            }
 
 			// now we have the deposit target, we can determine whether this operation is allowed
 			// at all
@@ -592,6 +612,10 @@ public class ContainerManagerDSpace extends DSpaceSwordAPI implements ContainerM
 
             // get the deposit target
             Item item = this.getDSpaceTarget(context, editIRI, config);
+            if (item == null)
+            {
+                throw new SwordError(404);
+            }
 
 			// now we have the deposit target, we can determine whether this operation is allowed
 			// at all
@@ -823,6 +847,10 @@ public class ContainerManagerDSpace extends DSpaceSwordAPI implements ContainerM
 
 		// get the target collection
 		Item item = urlManager.getItem(context, editUrl);
+        if (item == null)
+        {
+            throw new SwordError(404);
+        }
 
 		this.verboseDescription.append("Performing replace using edit-media URL: " + editUrl);
         this.verboseDescription.append("Location resolves to item with handle: " + item.getHandle());

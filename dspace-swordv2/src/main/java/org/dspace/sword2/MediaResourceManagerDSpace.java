@@ -69,6 +69,10 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
 			{
 				// we're being asked for the bitstream itself
 				Bitstream bitstream = urlManager.getBitstream(context, uri);
+                if (bitstream == null)
+                {
+                    throw new SwordError(404);
+                }
 
 				// find out, now we know what we're being asked for, whether this is allowed
 				WorkflowManagerFactory.getInstance().retrieveBitstream(context, bitstream);
@@ -83,6 +87,10 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
 			{
 				// we're dealing with a request for a representation of the item as a media resource
 				Item item = urlManager.getItem(context, uri);
+                if (item == null)
+                {
+                    throw new SwordError(404);
+                }
 				boolean feedRequest = urlManager.isFeedRequest(context, uri);
 
 				// find out, now we know what we're being asked for, whether this is allowed
@@ -204,6 +212,10 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
 			if (urlManager.isActionableBitstreamUrl(context, emUri))
 			{
                 Bitstream bitstream = urlManager.getBitstream(context, emUri);
+                if (bitstream == null)
+                {
+                    throw new SwordError(404);
+                }
 
                 // now we have the deposit target, we can determine whether this operation is allowed
                 // at all
@@ -274,6 +286,10 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
             {
                 // get the deposit target
                 Item item = this.getDSpaceTarget(context, emUri, config);
+                if (item == null)
+                {
+                    throw new SwordError(404);
+                }
 
                 // now we have the deposit target, we can determine whether this operation is allowed
                 // at all
@@ -405,6 +421,10 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
 			if (urlManager.isActionableBitstreamUrl(context, emUri))
 			{
 				Bitstream bitstream = urlManager.getBitstream(context, emUri);
+                if (bitstream == null)
+                {
+                    throw new SwordError(404);
+                }
 
 				// now we have the deposit target, we can determine whether this operation is allowed
 				// at all
@@ -433,6 +453,10 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
 			else
 			{
 				Item item = this.getDSpaceTarget(context, emUri, config);
+                if (item == null)
+                {
+                    throw new SwordError(404);
+                }
 
 				// now we have the deposit target, we can determine whether this operation is allowed
 				// at all
@@ -526,6 +550,10 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
 
             // get the deposit target
             Item item = this.getDSpaceTarget(context, emUri, config);
+            if (item == null)
+            {
+                throw new SwordError(404);
+            }
 
 			// now we have the deposit target, we can determine whether this operation is allowed
 			// at all
