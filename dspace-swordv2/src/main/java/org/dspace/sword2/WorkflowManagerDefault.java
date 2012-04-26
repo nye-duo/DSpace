@@ -127,6 +127,15 @@ public class WorkflowManagerDefault implements WorkflowManager
     public void replaceBitstream(Context context, Bitstream bitstream)
             throws SwordError, DSpaceSwordException
     {
+        // File replace with DSpace actually violates the RESTful environment, so it is
+        // turned off by default, and strongly advised against.  Nonetheless, it is used
+        // by some DepositMO aware extensions, so must be supported (as shown below)
+        boolean fileReplace = ConfigurationManager.getBooleanProperty("swordv2-server", "workflowmanagerdefault.file-replace.enable");
+        if (!fileReplace)
+        {
+            throw new SwordError(UriRegistry.ERROR_METHOD_NOT_ALLOWED, "DSpace does not support file replace; you should DELETE the original file and PUT the new one");
+        }
+
         // this is equivalent to asking whether the media resource in the item can be deleted
 		try
 		{

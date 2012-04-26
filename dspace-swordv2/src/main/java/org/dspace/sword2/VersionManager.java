@@ -81,6 +81,18 @@ public class VersionManager
 				bundle.removeBitstream(bitstream);
 			}
 		}
+
+        // there is nowhere in the metadata to say when this file was moved, so we
+        // are going to drop it into the description
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        String desc = bitstream.getDescription();
+        String newDesc = "[Deleted on: " + sdf.format(new Date()) + "] ";
+        if (desc != null)
+        {
+            newDesc += desc;
+        }
+        bitstream.setDescription(newDesc);
+        bitstream.update();
 	}
 
 	private Bundle archiveBitstream(Item item, Bitstream bitstream)

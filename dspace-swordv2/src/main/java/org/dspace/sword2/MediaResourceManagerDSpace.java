@@ -12,6 +12,7 @@ import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.Bitstream;
 import org.dspace.content.Bundle;
 import org.dspace.content.Item;
+import org.dspace.core.ConfigurationManager;
 import org.dspace.core.Context;
 import org.dspace.core.LogManager;
 import org.swordapp.server.AuthCredentials;
@@ -777,8 +778,11 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
 			throws DSpaceSwordException, SwordError, SwordAuthException, SwordServerException
     {
 		// FIXME: this is basically not possible with the existing DSpace API.
-        // we are going to hack around the problem, by deleting the old bitstream and
-        // adding the new one and returning it
+
+        // We hack around it by deleting the old bitstream and
+        // adding the new one and returning it,
+        // but this isn't in line with the REST approach of SWORD, so the caller should really
+        // 405 the client
 
         // get the things out of the service that we need
 		Context context = swordContext.getContext();
