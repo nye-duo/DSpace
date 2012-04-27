@@ -47,6 +47,9 @@ public abstract class GenericStatementDisseminator implements SwordStatementDiss
 	{
 		try
 		{
+            // NOTE: DSpace does not store file metadata, so we can't access the information
+            // about who deposited what, when, on behalf of whoever.
+
 			// an original deposit is everything in the SWORD bundle
 			List<OriginalDeposit> originalDeposits = new ArrayList<OriginalDeposit>();
             String swordBundle = ConfigurationManager.getProperty("swordv2-server", "bundle.name");

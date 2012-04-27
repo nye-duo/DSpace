@@ -19,6 +19,7 @@ import org.dspace.content.Item;
 import org.dspace.core.*;
 import org.swordapp.server.AuthCredentials;
 import org.swordapp.server.Deposit;
+import org.swordapp.server.DepositReceipt;
 import org.swordapp.server.SwordAuthException;
 import org.swordapp.server.SwordError;
 import org.swordapp.server.SwordServerException;
@@ -504,4 +505,13 @@ public class DSpaceSwordAPI
 		pw.println("User name=" + auth.getUsername());
 		pw.close();
 	}
+
+    protected void addVerboseDescription(DepositReceipt receipt, VerboseDescription verboseDescription)
+    {
+        boolean includeVerbose = ConfigurationManager.getBooleanProperty("swordv2-server", "verbose-description.enable");
+        if (includeVerbose)
+        {
+            receipt.setVerboseDescription(verboseDescription.toString());
+        }
+    }
 }

@@ -657,7 +657,7 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
             long delta = finish.getTime() - start.getTime();
 
             this.verboseDescription.append("Total time for add processing: " + delta + " ms");
-            receipt.setVerboseDescription(this.verboseDescription.toString());
+            this.addVerboseDescription(receipt, this.verboseDescription);
 
             // if something hasn't killed it already (allowed), then complete the transaction
             sc.commit();
