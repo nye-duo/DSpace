@@ -508,7 +508,7 @@ public class DSpaceSwordAPI
 
     protected void addVerboseDescription(DepositReceipt receipt, VerboseDescription verboseDescription)
     {
-        boolean includeVerbose = ConfigurationManager.getBooleanProperty("swordv2-server", "verbose-description.enable");
+        boolean includeVerbose = ConfigurationManager.getBooleanProperty("swordv2-server", "verbose-description.receipt.enable");
         if (includeVerbose)
         {
             receipt.setVerboseDescription(verboseDescription.toString());

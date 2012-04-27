@@ -169,7 +169,7 @@ public class SwordConfigurationDSpace implements SwordConfiguration
 
 	public boolean returnStackTraceInError()
 	{
-		return true;
+		return ConfigurationManager.getBooleanProperty("swordv2-server", "verbose-description.error.enable");
 	}
 
 	public boolean returnErrorBody()
@@ -207,7 +207,17 @@ public class SwordConfigurationDSpace implements SwordConfiguration
 		return this.getStringProperty("swordv2-server", "upload.tempdir", null);
 	}
 
-	///////////////////////////////////////////////////////////////////////////////////
+    public String getAlternateUrl()
+    {
+        return ConfigurationManager.getProperty("swordv2-server", "error.alternate.url");
+    }
+
+    public String getAlternateUrlContentType()
+    {
+        return ConfigurationManager.getProperty("swordv2-server", "error.alternate.content-type");
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////
 	// Required by DSpace-side implementation
 	///////////////////////////////////////////////////////////////////////////////////
 
