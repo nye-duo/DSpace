@@ -69,6 +69,12 @@ public class DSpaceSwordAPI
     public SwordContext doAuth(AuthCredentials authCredentials)
             throws SwordAuthException, SwordError, DSpaceSwordException
     {
+        // if there is no supplied username, then we should request a retry
+        if (authCredentials.getUsername() == null)
+        {
+            throw new SwordAuthException(true);
+        }
+
         // first authenticate the request
         // note: this will build our various DSpace contexts for us
         SwordAuthenticator auth = new SwordAuthenticator();

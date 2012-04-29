@@ -150,7 +150,7 @@ public class SwordUrlManager
 		catch (SQLException e)
 		{
 			// log.error("Caught exception:", e);
-			throw new DSpaceSwordException("There was a problem resolving the collection", e);
+			throw new DSpaceSwordException("There was a problem resolving the item", e);
 		}
     }
 

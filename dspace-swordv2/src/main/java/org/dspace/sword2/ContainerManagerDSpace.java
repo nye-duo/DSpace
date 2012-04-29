@@ -9,9 +9,11 @@ package org.dspace.sword2;
 
 import org.apache.log4j.Logger;
 import org.dspace.authorize.AuthorizeException;
+import org.dspace.authorize.AuthorizeManager;
 import org.dspace.content.Collection;
 import org.dspace.content.Item;
 import org.dspace.content.WorkspaceItem;
+import org.dspace.core.Constants;
 import org.dspace.core.Context;
 import org.dspace.core.LogManager;
 import org.dspace.workflow.WorkflowItem;
@@ -97,11 +99,22 @@ public class ContainerManagerDSpace extends DSpaceSwordAPI implements ContainerM
                 throw new SwordError(404);
             }
 
+            // we can't give back an entry unless the user is authorised to retrieve it
+            AuthorizeManager.authorizeAction(context, item, Constants.READ);
+
 			ReceiptGenerator genny = new ReceiptGenerator();
 			DepositReceipt receipt = genny.createReceipt(context, item, config);
 			sc.abort();
 			return receipt;
 		}
+        catch (AuthorizeException e)
+        {
+            throw new SwordAuthException();
+        }
+        catch (SQLException e)
+        {
+            throw new SwordServerException(e);
+        }
 		catch (DSpaceSwordException e)
 		{
 			throw new SwordServerException(e);

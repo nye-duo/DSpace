@@ -8,7 +8,10 @@
 package org.dspace.sword2;
 
 import org.apache.log4j.Logger;
+import org.dspace.authorize.AuthorizeException;
+import org.dspace.authorize.AuthorizeManager;
 import org.dspace.content.Item;
+import org.dspace.core.Constants;
 import org.dspace.core.Context;
 import org.dspace.core.LogManager;
 import org.swordapp.server.AuthCredentials;
@@ -21,6 +24,7 @@ import org.swordapp.server.SwordServerException;
 import org.swordapp.server.UriRegistry;
 
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,6 +65,8 @@ public class StatementManagerDSpace extends DSpaceSwordAPI implements StatementM
                 throw new SwordError(404);
             }
 
+            AuthorizeManager.authorizeAction(context, item, Constants.READ);
+
 			// find out, now we know what we're being asked for, whether this is allowed
 			WorkflowManagerFactory.getInstance().retrieveStatement(context, item);
 
@@ -89,6 +95,14 @@ public class StatementManagerDSpace extends DSpaceSwordAPI implements StatementM
 
 			Statement statement = disseminator.disseminate(context, item);
             return statement;
+        }
+        catch (AuthorizeException e)
+        {
+            throw new SwordAuthException();
+        }
+        catch (SQLException e)
+        {
+            throw new SwordServerException(e);
         }
         catch (DSpaceSwordException e)
         {

@@ -356,7 +356,7 @@ public class SwordAuthenticator
 				if (ep != null)
 				{
 					log.info(LogManager.getHeader(context, "sword_unable_to_set_user", "username=" + un));
-					throw new SwordAuthException("Unable to authenticate the supplied used");
+					throw new SwordAuthException("Unable to authenticate with the supplied credentials");
 				}
 				else
 				{
