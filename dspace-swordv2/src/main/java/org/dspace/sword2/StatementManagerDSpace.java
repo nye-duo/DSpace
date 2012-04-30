@@ -65,6 +65,7 @@ public class StatementManagerDSpace extends DSpaceSwordAPI implements StatementM
                 throw new SwordError(404);
             }
 
+            // find out if we are allowed to read the item's statement
             AuthorizeManager.authorizeAction(context, item, Constants.READ);
 
 			// find out, now we know what we're being asked for, whether this is allowed

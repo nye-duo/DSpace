@@ -239,7 +239,10 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
         }
     }
 
-    /*
+    /* This was the previous implementation which did not properly deal with authorisation and
+        access without credentials (which is allowed if the bitstream/item permissions are
+        set to allow it ...
+
     public MediaResource getMediaResourceRepresentation(String uri, Map<String, String> accept, AuthCredentials authCredentials, SwordConfiguration swordConfig)
             throws SwordError, SwordServerException, SwordAuthException
     {
