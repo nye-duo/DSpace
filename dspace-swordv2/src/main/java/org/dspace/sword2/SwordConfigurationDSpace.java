@@ -630,8 +630,48 @@ public class SwordConfigurationDSpace implements SwordConfiguration
 			throws DSpaceSwordException
 	{
 		List<String> accepts = this.getAccepts(context, dso);
+        for (String acc : accepts)
+        {
+            if (this.contentTypeMatches(type, acc))
+            {
+                return true;
+            }
+        }
 		return accepts.contains(type);
 	}
+
+    private boolean contentTypeMatches(String type, String pattern)
+    {
+        if ("*/*".equals(pattern.trim()))
+        {
+            return true;
+        }
+
+        // get the prefix and suffix match patterns
+        String[] bits = pattern.trim().split("/");
+        String prefixPattern = bits.length > 0 ? bits[0] : "*";
+        String suffixPattern = bits.length > 1 ? bits[1] : "*";
+
+        // get the incoming type prefix and suffix
+        String[] tbits = type.trim().split("/");
+        String typePrefix = tbits.length > 0 ? tbits[0] : "*";
+        String typeSuffix = tbits.length > 1 ? tbits[1] : "*";
+
+        boolean prefixMatch = false;
+        boolean suffixMatch = false;
+
+        if ("*".equals(prefixPattern) || prefixPattern.equals(typePrefix))
+        {
+            prefixMatch = true;
+        }
+
+        if ("*".equals(suffixPattern) || suffixPattern.equals(typeSuffix))
+        {
+            suffixMatch = true;
+        }
+
+        return prefixMatch && suffixMatch;
+    }
 
 	public String getStateUri(String state)
 	{

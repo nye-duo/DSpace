@@ -38,9 +38,9 @@ public class StatementManagerDSpace extends DSpaceSwordAPI implements StatementM
 	public Statement getStatement(String stateIRI, Map<String, String> accept, AuthCredentials authCredentials, SwordConfiguration swordConfig)
 			throws SwordServerException, SwordError, SwordAuthException
 	{
+        SwordContext sc = null;
 		try
         {
-            SwordContext sc = null;
             SwordConfigurationDSpace config = (SwordConfigurationDSpace) swordConfig;
 
             SwordAuthenticator auth = new SwordAuthenticator();
@@ -108,6 +108,13 @@ public class StatementManagerDSpace extends DSpaceSwordAPI implements StatementM
         catch (DSpaceSwordException e)
         {
             throw new SwordServerException(e);
+        }
+        finally
+        {
+            if (sc != null)
+            {
+                sc.abort();
+            }
         }
 	}
 }
