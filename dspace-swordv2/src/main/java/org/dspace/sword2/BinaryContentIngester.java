@@ -28,26 +28,6 @@ import java.util.List;
 
 public class BinaryContentIngester extends AbstractSwordContentIngester
 {
-	public DepositResult ingest(Context context, Deposit deposit, DSpaceObject dso, VerboseDescription verboseDescription)
-			throws DSpaceSwordException, SwordError, SwordAuthException, SwordServerException
-	{
-		return this.ingest(context, deposit, dso, verboseDescription, null);
-	}
-
-	public DepositResult ingest(Context context, Deposit deposit, DSpaceObject dso, VerboseDescription verboseDescription, DepositResult result)
-			throws DSpaceSwordException, SwordError, SwordAuthException, SwordServerException
-	{
-		if (dso instanceof Collection)
-		{
-			return this.ingestToCollection(context, deposit, (Collection) dso, verboseDescription, result);
-		}
-		else if (dso instanceof Item)
-		{
-			return this.ingestToItem(context, deposit, (Item) dso, verboseDescription, result);
-		}
-		return null;
-	}
-
 	public DepositResult ingestToCollection(Context context, Deposit deposit, Collection collection, VerboseDescription verboseDescription, DepositResult result)
 			throws DSpaceSwordException, SwordError, SwordAuthException, SwordServerException
 	{
