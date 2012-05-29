@@ -154,7 +154,21 @@ public class SwordMETSContentIngester extends AbstractSwordContentIngester
 		}
 	}
 
-	/**
+    @Override
+    public DepositResult ingestToCollection(Context context, Deposit deposit, Collection collection, VerboseDescription verboseDescription, DepositResult result)
+            throws DSpaceSwordException, SwordError, SwordAuthException, SwordServerException
+    {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public DepositResult ingestToItem(Context context, Deposit deposit, Item item, VerboseDescription verboseDescription, DepositResult result)
+            throws DSpaceSwordException, SwordError, SwordAuthException, SwordServerException
+    {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    /**
 	 * The human readable description of the treatment this ingester has
 	 * put the deposit through
 	 *
