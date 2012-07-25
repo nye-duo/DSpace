@@ -402,7 +402,36 @@ public class HarvestedCollection
     public Date getHarvestStartTime() {
     	return harvestRow.getDateColumn("harvest_start_time");
     }
-    
+
+    public String getMetadataAuthorityType()
+    {
+        return null;
+    }
+
+    public void setMetadataAuthorityType(String authorityType)
+    {
+        
+    }
+
+    public String getBundleVersioningStrategy()
+    {
+        return null;
+    }
+
+    public void setBundleVersioningStrategy(String strategy)
+    {
+
+    }
+
+    public String getWorkflowProcess()
+    {
+        return null;
+    }
+
+    public void setWorkflowProcess(String workflowProcess)
+    {
+        
+    }
     
     
     public void delete() throws SQLException {
@@ -414,8 +443,6 @@ public class HarvestedCollection
         DatabaseManager.update(context, harvestRow);
 
     }
-
-    
     
     
 }

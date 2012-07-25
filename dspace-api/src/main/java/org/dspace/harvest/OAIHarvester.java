@@ -457,7 +457,19 @@ public class OAIHarvester {
     	ourContext.turnOffAuthorisationSystem();
     	
     	HarvestedItem hi;
-    	
+
+        // get the ingestion workflow implementation
+        String workflowProcess = harvestRow.getWorkflowProcess();
+        IngestionWorkflow ingestionWorkflow = null;
+        if (workflowProcess != null)
+        {
+            ingestionWorkflow = (IngestionWorkflow) PluginManager.getNamedPlugin(IngestionWorkflow.class, workflowProcess);
+        }
+        else
+        {
+            ingestionWorkflow = new DefaultIngestionWorkflow();
+        }
+
     	if (item != null) // found an item so we modify 
     	{	
     		log.debug("Item " + item.getHandle() + " was found locally. Using it to harvest " + itemOaiID + ".");
@@ -475,7 +487,28 @@ public class OAIHarvester {
 			}
 			
 			// Otherwise, clear and re-import the metadata and bitstreams
-    		item.clearMetadata(Item.ANY, Item.ANY, Item.ANY, Item.ANY);
+
+            // first, let's make sure that we're updating the right thing.  Allow the IngestionWorkflow
+            // to give us a new item if necessary, and update the HarvestedItem if it wants
+            item = ingestionWorkflow.preUpdate(ourContext, item, hi, descMD, oreREM);
+            
+
+            // allow a plugin to clear the metadata if one is configured
+            String mdAuthority = harvestRow.getMetadataAuthorityType();
+            MetadataRemover mdr = null;
+            if (mdAuthority != null)
+            {
+                mdr = (MetadataRemover) PluginManager.getNamedPlugin(MetadataRemover.class, mdAuthority);
+            }
+            if (mdr != null)
+            {
+                mdr.clearMetadata(item);
+            }
+            else
+            {
+                item.clearMetadata(Item.ANY, Item.ANY, Item.ANY, Item.ANY);
+            }
+            
     		if (descMD.size() == 1)
             {
                 MDxwalk.ingest(ourContext, item, descMD.get(0));
@@ -488,15 +521,34 @@ public class OAIHarvester {
     		// Import the actual bitstreams
     		if (harvestRow.getHarvestType() == 3) {
     			log.info("Running ORE ingest on: " + item.getHandle());
-    			
-    			Bundle[] allBundles = item.getBundles();
-    			for (Bundle bundle : allBundles) {
-    				item.removeBundle(bundle);
-    			}
+
+                // allow a plugin to remove the bundles if configured
+                String bundleVersioning = harvestRow.getBundleVersioningStrategy();
+                BundleVersioningStrategy bvs = null;
+                if (bundleVersioning == null)
+                {
+                    bvs = (BundleVersioningStrategy) PluginManager.getNamedPlugin(BundleVersioningStrategy.class, bundleVersioning);
+                }
+                if (bvs != null)
+                {
+                    bvs.versionBundles(item);
+                }
+                else
+                {
+                    Bundle[] allBundles = item.getBundles();
+                    for (Bundle bundle : allBundles) {
+                        item.removeBundle(bundle);
+                    }
+                }
+
+                // now do the crosswalk
     			ORExwalk.ingest(ourContext, item, oreREM);
     		}
     		
     		scrubMetadata(item);
+
+            // let the ingestion workflow process decide what to do with the item
+            ingestionWorkflow.postUpdate(ourContext, item);
     	} 
     	else 
     		// NOTE: did not find, so we create (presumably, there will never be a case where an item already 
@@ -535,7 +587,10 @@ public class OAIHarvester {
                     throw new HarvestingException("Handle collision: attempted to re-assign handle '" + handle + "' to an incoming harvested item '" + hi.getOaiID() + "'.");
                 }
     		}
-    		
+
+            item = ingestionWorkflow.postCreate(ourContext, wi, handle);
+
+            /*
     		try {
     			item = InstallItem.installItem(ourContext, wi, handle);
     			//item = InstallItem.installItem(ourContext, wi);
@@ -553,6 +608,7 @@ public class OAIHarvester {
     			wi.deleteWrapper();
     			throw ae;
     		}
+    		*/
     	}
     	
     	// Now create the special ORE bundle and drop the ORE document in it
