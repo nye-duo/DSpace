@@ -502,7 +502,7 @@ public class OAIHarvester {
             }
             if (mdr != null)
             {
-                mdr.clearMetadata(item);
+                mdr.clearMetadata(ourContext, item);
             }
             else
             {
@@ -531,7 +531,7 @@ public class OAIHarvester {
                 }
                 if (bvs != null)
                 {
-                    bvs.versionBundles(item);
+                    bvs.versionBundles(ourContext, item);
                 }
                 else
                 {
