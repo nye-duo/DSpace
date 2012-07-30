@@ -230,8 +230,8 @@ public class SetupCollectionHarvestingForm extends AbstractDSpaceTransformer
             	metadataFormat.addOption(metadataKey.equalsIgnoreCase(metadataFormatValue), metadataKey, displayName);
             }
         }
-        
-        
+
+        // option to test the settings
         settings.addLabel();
 	    Item harvestButtons = settings.addItem();
 	    harvestButtons.addButton("submit_test").setValue(T_submit_test);
@@ -248,6 +248,32 @@ public class SetupCollectionHarvestingForm extends AbstractDSpaceTransformer
 	    harvestLevel.addOption(harvestLevelValue == 1, 1, T_option_md_only);
 	    harvestLevel.addOption(harvestLevelValue == 2, 2, T_option_md_and_ref);
 	    harvestLevel.addOption(harvestLevelValue != 1 && harvestLevelValue != 2, 3, T_option_md_and_bs);
+
+        // FIXME: no attempt yet to internationalise any of this ...
+        // FIXME: no attempt yet to bind this to configuration ...
+        ////////////////////////////////////////////////////////////
+
+        // Add a metadata removal configuration option
+        harvestOptions.addLabel("Metadata update strategy");
+        Select metadataRemoval = harvestOptions.addItem().addSelect("metadata_update");
+        metadataRemoval.addOption("all", "Replace all metadata on update");
+        metadataRemoval.addOption("cristin", "Replace only Cristin authority controlled metadata");
+
+        // Add a bundle versioning strategy option
+        harvestOptions.addLabel("Bundle/Bitstream versioning strategy");
+        Select bundleVersioning = harvestOptions.addItem().addSelect("bundle_versioning");
+        bundleVersioning.addOption("all", "Remove all old bundles/bitstreams on update");
+        bundleVersioning.addOption("cristin", "Synchronise bitstreams with Cristin");
+
+        // Add an ingest workflow setup option
+        harvestOptions.addLabel("Ingest Workflow");
+        Select ingestWorkflow = harvestOptions.addItem().addSelect("ingest_workflow");
+        ingestWorkflow.addOption("archive", "All items go directly into the archive");
+        ingestWorkflow.addOption("cristin", "All items go through the DSpace workflow");
+
+        // FIXME: no attempt yet to internationalise any of that
+        // FIXME: no attempt yet to bind that to configuration
+        ////////////////////////////////////////////////////////////
 	    
 		Para buttonList = main.addPara();
 	    buttonList.addButton("submit_save").setValue(T_submit_save);
