@@ -220,6 +220,24 @@ public class FlowContainerUtils
 				
 				hc.setHarvestParams(Integer.parseInt(harvestType), oaiProvider, oaiSetId, metadataKey);
 				hc.setHarvestStatus(HarvestedCollection.STATUS_READY);
+
+                // additional configuration options
+                String metadataUpdate = request.getParameter("metadata_update");
+                String bundleVersioning = request.getParameter("bundle_versioning");
+                String ingestWorkflow = request.getParameter("ingest_workflow");
+
+                if (!"all".equals(metadataUpdate))
+                {
+                    hc.setMetadataAuthorityType(metadataUpdate);
+                }
+                if (!"all".equals(bundleVersioning))
+                {
+                    hc.setBundleVersioningStrategy(bundleVersioning);
+                }
+                if (!"archive".equals(ingestWorkflow))
+                {
+                    hc.setWorkflowProcess(ingestWorkflow);
+                }
 			}
 			else {
 				result.setErrors(subResult.getErrors());

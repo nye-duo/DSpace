@@ -405,32 +405,41 @@ public class HarvestedCollection
 
     public String getMetadataAuthorityType()
     {
-        return null;
+        return harvestRow.getStringColumn("metadata_authority_type");
     }
 
     public void setMetadataAuthorityType(String authorityType)
     {
-        
+        if (authorityType != null)
+        {
+            harvestRow.setColumn("metadata_authority_type", authorityType);
+        }
     }
 
     public String getBundleVersioningStrategy()
     {
-        return null;
+        return harvestRow.getStringColumn("bundle_versioning_strategy");
     }
 
     public void setBundleVersioningStrategy(String strategy)
     {
-
+        if (strategy != null)
+        {
+            harvestRow.setColumn("bundle_versioning_strategy", strategy);
+        }
     }
 
     public String getWorkflowProcess()
     {
-        return null;
+        return harvestRow.getStringColumn("workflow_process");
     }
 
     public void setWorkflowProcess(String workflowProcess)
     {
-        
+        if (workflowProcess != null)
+        {
+            harvestRow.setColumn("workflow_process", workflowProcess);
+        }
     }
     
     
