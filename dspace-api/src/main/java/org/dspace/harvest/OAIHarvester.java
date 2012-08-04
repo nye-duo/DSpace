@@ -470,6 +470,9 @@ public class OAIHarvester {
             ingestionWorkflow = new DefaultIngestionWorkflow();
         }
 
+        // FIXME: at some point in here we need to decide whether we are actually going to accept the item
+        // at all; this might require a plugin
+
     	if (item != null) // found an item so we modify 
     	{	
     		log.debug("Item " + item.getHandle() + " was found locally. Using it to harvest " + itemOaiID + ".");
