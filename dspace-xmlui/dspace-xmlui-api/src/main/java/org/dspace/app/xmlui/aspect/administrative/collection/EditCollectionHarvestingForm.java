@@ -99,6 +99,9 @@ public class EditCollectionHarvestingForm extends AbstractDSpaceTransformer
 		String metadataFormatValue = hc.getHarvestMetadataConfig();
 		int harvestLevelValue = hc.getHarvestType();
 		int harvestStatusValue = hc.getHarvestStatus();
+        String metadataUpdateValue = hc.getMetadataAuthorityType();
+        String bundleVersioningValue = hc.getBundleVersioningStrategy();
+        String ingestWorkflowValue = hc.getWorkflowProcess();
 					    
 		// DIVISION: main
 	    Division main = body.addInteractiveDivision("collection-harvesting-edit",contextPath+"/admin/collection",Division.METHOD_MULTIPART,"primary administrative collection");
@@ -153,6 +156,24 @@ public class EditCollectionHarvestingForm extends AbstractDSpaceTransformer
     		case 2: harvestLevel.addContent(T_option_md_and_ref); break;
     		default: harvestLevel.addContent(T_option_md_and_bs); break;
     	}
+
+        // FIXME: no attempt to internationalise this yet
+        /////////////////////////////////////////////////
+
+        // Add a metadata removal configuration option
+        settings.addLabel("Metadata update strategy");
+        settings.addItem().addContent(metadataUpdateValue);
+
+        // Add a bundle versioning strategy option
+        settings.addLabel("Bundle/Bitstream versioning strategy");
+        settings.addItem().addContent(bundleVersioningValue);
+
+        // Add an ingest workflow setup option
+        settings.addLabel("Ingest Workflow");
+        settings.addItem().addContent(ingestWorkflowValue);
+        
+        // FIXME: no attempt to internationalise the above yet
+        //////////////////////////////////////////////////////
 	        	    	
         /* Results of the last harvesting cycle */
         if (harvestLevelValue > 0) {

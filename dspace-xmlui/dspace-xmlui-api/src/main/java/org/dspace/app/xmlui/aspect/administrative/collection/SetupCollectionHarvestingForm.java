@@ -110,17 +110,22 @@ public class SetupCollectionHarvestingForm extends AbstractDSpaceTransformer
             }
 		}
 		
-		
 		String oaiProviderValue;
 		String oaiSetIdValue;
 		String metadataFormatValue;
 		int harvestLevelValue;
+        String metadataUpdateValue;
+        String bundleVersioningValue;
+        String ingestWorkflowValue;
 				
 		if (hc != null && request.getParameter("submit_test") == null) {
 			oaiProviderValue = hc.getOaiSource();
 			oaiSetIdValue = hc.getOaiSetId();
 			metadataFormatValue = hc.getHarvestMetadataConfig();
-			harvestLevelValue = hc.getHarvestType();			
+			harvestLevelValue = hc.getHarvestType();
+            metadataUpdateValue = hc.getMetadataAuthorityType();
+            bundleVersioningValue = hc.getBundleVersioningStrategy();
+            ingestWorkflowValue = hc.getWorkflowProcess();
 		}
 		else {
 			oaiProviderValue = parameters.getParameter("oaiProviderValue", "");
@@ -139,6 +144,11 @@ public class SetupCollectionHarvestingForm extends AbstractDSpaceTransformer
             {
                 harvestLevelValue = Integer.parseInt(harvestLevelString);
             }
+
+            // default values for the varions ingest process options
+            metadataUpdateValue = "all";
+            bundleVersioningValue = "all";
+            ingestWorkflowValue = "archive";
 		}
 		
 		// DIVISION: main
@@ -256,20 +266,20 @@ public class SetupCollectionHarvestingForm extends AbstractDSpaceTransformer
         // Add a metadata removal configuration option
         harvestOptions.addLabel("Metadata update strategy");
         Select metadataRemoval = harvestOptions.addItem().addSelect("metadata_update");
-        metadataRemoval.addOption("all", "Replace all metadata on update");
-        metadataRemoval.addOption("cristin", "Replace only Cristin authority controlled metadata");
+        metadataRemoval.addOption("all".equals(metadataUpdateValue), "all", "Replace all metadata on update");
+        metadataRemoval.addOption("cristin".equals(metadataUpdateValue), "cristin", "Replace only Cristin authority controlled metadata");
 
         // Add a bundle versioning strategy option
         harvestOptions.addLabel("Bundle/Bitstream versioning strategy");
         Select bundleVersioning = harvestOptions.addItem().addSelect("bundle_versioning");
-        bundleVersioning.addOption("all", "Remove all old bundles/bitstreams on update");
-        bundleVersioning.addOption("cristin", "Synchronise bitstreams with Cristin");
+        bundleVersioning.addOption("all".equals(bundleVersioningValue), "all", "Remove all old bundles/bitstreams on update");
+        bundleVersioning.addOption("cristin".equals(bundleVersioningValue), "cristin", "Synchronise bitstreams with Cristin");
 
         // Add an ingest workflow setup option
         harvestOptions.addLabel("Ingest Workflow");
         Select ingestWorkflow = harvestOptions.addItem().addSelect("ingest_workflow");
-        ingestWorkflow.addOption("archive", "All items go directly into the archive");
-        ingestWorkflow.addOption("cristin", "All items go through the DSpace workflow");
+        ingestWorkflow.addOption("archive".equals(ingestWorkflowValue), "archive", "All items go directly into the archive");
+        ingestWorkflow.addOption("cristin".equals(ingestWorkflowValue), "cristin", "All items go through the DSpace workflow");
 
         // FIXME: no attempt yet to internationalise any of that
         // FIXME: no attempt yet to bind that to configuration
