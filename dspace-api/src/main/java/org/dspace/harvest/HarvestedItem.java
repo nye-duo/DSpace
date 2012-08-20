@@ -125,6 +125,11 @@ public class HarvestedItem
         return oai_id;
     }
 
+    public void setItemID(int itemID)
+    {
+        harvestRow.setColumn("item_id", itemID);
+    }
+
     /**
      * Get the oai_id associated with this item 
      */

@@ -1,6 +1,7 @@
 package org.dspace.harvest;
 
 import org.dspace.authorize.AuthorizeException;
+import org.dspace.content.Collection;
 import org.dspace.content.InstallItem;
 import org.dspace.content.Item;
 import org.dspace.content.WorkspaceItem;
@@ -14,7 +15,7 @@ import java.util.List;
 public class DefaultIngestionWorkflow implements IngestionWorkflow
 {
     @Override
-    public Item preUpdate(Context context, Item item, HarvestedItem hi, List<Element> descMd, Element oreREM)
+    public Item preUpdate(Context context, Item item, Collection targetCollection, HarvestedItem hi, List<Element> descMd, Element oreREM)
     {
         return item;
     }
@@ -50,5 +51,12 @@ public class DefaultIngestionWorkflow implements IngestionWorkflow
             wi.deleteWrapper();
             throw ae;
         }
+    }
+
+    @Override
+    public boolean updateBitstreams(Context context, Item item, HarvestedItem hi)
+            throws SQLException, IOException, AuthorizeException
+    {
+        return true;
     }
 }

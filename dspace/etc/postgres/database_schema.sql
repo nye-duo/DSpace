@@ -759,7 +759,8 @@ CREATE TABLE harvested_collection
     id INTEGER PRIMARY KEY,
     metadata_authority_type VARCHAR,
     bundle_versioning_strategy VARCHAR,
-    workflow_process VARCHAR
+    workflow_process VARCHAR,
+    ingest_filter VARCHAR
 );
 
 CREATE INDEX harvested_collection_fk_idx ON harvested_collection(collection_id);

@@ -12,6 +12,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.ConnectException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -22,6 +24,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TimeZone;
@@ -425,7 +428,10 @@ public class OAIHarvester {
     	// grab the oai identifier
     	String itemOaiID = record.getChild("header", OAI_NS).getChild("identifier", OAI_NS).getText();
     	Element header = record.getChild("header",OAI_NS);
-    	
+
+        // FIXME: should all this stuff be here, before we've decided whether
+        // we're going to ingest the record?
+
     	// look up the item corresponsing to the OAI identifier
     	Item item = HarvestedItem.getItemByOAIId(ourContext, itemOaiID, targetCollection.getID());
     	    	
@@ -440,6 +446,7 @@ public class OAIHarvester {
 			ourContext.restoreAuthSystemState();			
 			return;
 		}
+        // end FIXME
     	
 		// If we are only harvesting descriptive metadata, the record should already contain all we need
     	List<Element> descMD = record.getChild("metadata", OAI_NS).getChildren();
@@ -452,9 +459,28 @@ public class OAIHarvester {
     		oreREM = getMDrecord(harvestRow.getOaiSource(), itemOaiID, OREPrefix).get(0);
     		ORExwalk = (IngestionCrosswalk)PluginManager.getNamedPlugin(IngestionCrosswalk.class, this.ORESerialKey);
     	}
-    	
-    	// Ignore authorization
+
+        // Ignore authorization
     	ourContext.turnOffAuthorisationSystem();
+
+        // before we do anything else, find out if the records meet the ingest requirements
+        String filter = harvestRow.getIngestFilter();
+        IngestFilter ingestFilter = null;
+        if (filter != null)
+        {
+            ingestFilter = (IngestFilter) PluginManager.getNamedPlugin(IngestFilter.class, filter);
+        }
+        else
+        {
+            ingestFilter = new DefaultIngestFilter();
+        }
+    	if (!ingestFilter.acceptIngest(descMD, oreREM))
+        {
+            // if the ingest is not acceptable, reject it
+            return;
+        }
+
+        // if we get to here we are good to go ahead with the ingest
     	
     	HarvestedItem hi;
 
@@ -493,7 +519,7 @@ public class OAIHarvester {
 
             // first, let's make sure that we're updating the right thing.  Allow the IngestionWorkflow
             // to give us a new item if necessary, and update the HarvestedItem if it wants
-            item = ingestionWorkflow.preUpdate(ourContext, item, hi, descMD, oreREM);
+            item = ingestionWorkflow.preUpdate(ourContext, item, targetCollection, hi, descMD, oreREM);
             
 
             // allow a plugin to clear the metadata if one is configured
@@ -525,26 +551,64 @@ public class OAIHarvester {
     		if (harvestRow.getHarvestType() == 3) {
     			log.info("Running ORE ingest on: " + item.getHandle());
 
-                // allow a plugin to remove the bundles if configured
-                String bundleVersioning = harvestRow.getBundleVersioningStrategy();
-                BundleVersioningStrategy bvs = null;
-                if (bundleVersioning == null)
+                boolean updateBitstreams = ingestionWorkflow.updateBitstreams(ourContext, item, hi);
+                if (updateBitstreams)
                 {
-                    bvs = (BundleVersioningStrategy) PluginManager.getNamedPlugin(BundleVersioningStrategy.class, bundleVersioning);
-                }
-                if (bvs != null)
-                {
-                    bvs.versionBundles(ourContext, item);
-                }
-                else
-                {
-                    Bundle[] allBundles = item.getBundles();
-                    for (Bundle bundle : allBundles) {
-                        item.removeBundle(bundle);
+                    // allow a plugin to remove the bundles if configured
+                    String bundleVersioning = harvestRow.getBundleVersioningStrategy();
+                    BundleVersioningStrategy bvs = null;
+                    if (bundleVersioning == null)
+                    {
+                        bvs = (BundleVersioningStrategy) PluginManager.getNamedPlugin(BundleVersioningStrategy.class, bundleVersioning);
+                    }
+                    if (bvs != null)
+                    {
+                        bvs.versionBundles(ourContext, item);
+                    }
+                    else
+                    {
+                        Bundle[] allBundles = item.getBundles();
+                        for (Bundle bundle : allBundles) {
+                            item.removeBundle(bundle);
+                        }
                     }
                 }
 
                 // now do the crosswalk
+                if (ORExwalk instanceof OAIConfigurableCrosswalk)
+                {
+                    Properties props = new Properties();
+                    props.put("update_bitstreams", updateBitstreams);
+
+                    // in order to get the code to compile we need to
+                    // call "configure" dynamically using reflection rather
+                    // than directly on the object, then we can catch the
+                    // NoSuchMethodException rather than getting a compile-time
+                    // error.
+                    //
+                    // the curse of getting used to dynamic languages and then
+                    // coming back to java
+
+                    try
+                    {
+                        Method method = ORExwalk.getClass().getMethod("configure", Properties.class);
+                        method.invoke(ORExwalk, props);
+                    }
+                    catch (NoSuchMethodException e)
+                    {
+                        // do nothing
+                    }
+                    catch (IllegalAccessException e)
+                    {
+                        // do nothing
+                    }
+                    catch (InvocationTargetException e)
+                    {
+                        // do nothing
+                    }
+                }
+
+                // once the xwalk is configured (or not), carry out the crosswalk
     			ORExwalk.ingest(ourContext, item, oreREM);
     		}
     		

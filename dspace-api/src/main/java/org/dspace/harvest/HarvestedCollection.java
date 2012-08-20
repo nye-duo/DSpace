@@ -441,6 +441,19 @@ public class HarvestedCollection
             harvestRow.setColumn("workflow_process", workflowProcess);
         }
     }
+
+    public String getIngestFilter()
+    {
+        return harvestRow.getStringColumn("ingest_filter");
+    }
+
+    public void setIngestFilter(String ingestFilter)
+    {
+        if (ingestFilter != null)
+        {
+            harvestRow.setColumn("ingest_filter", ingestFilter);
+        }
+    }
     
     
     public void delete() throws SQLException {
