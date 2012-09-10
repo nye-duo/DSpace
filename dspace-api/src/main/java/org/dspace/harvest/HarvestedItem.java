@@ -75,35 +75,67 @@ public class HarvestedItem
          * provider but not to the harvester.
          */
    	 	Item resolvedItem = null;
-        TableRowIterator tri = null;
-        final String selectItemFromOaiId = "SELECT dsi.item_id FROM " + 
+
+        String[] queries = {
+            "SELECT dsi.item_id FROM " +
         	"(SELECT item.item_id, item.owning_collection FROM item JOIN harvested_item ON item.item_id=harvested_item.item_id WHERE harvested_item.oai_id=?) " + 
-        	"dsi JOIN collection ON dsi.owning_collection=collection.collection_id WHERE collection.collection_id=?";
+        	"dsi JOIN collection ON dsi.owning_collection=collection.collection_id WHERE collection.collection_id=?",
+
+            "SELECT dsi.item_id FROM " +
+        	"(SELECT workflowitem.item_id, workflowitem.collection_id FROM workflowitem JOIN harvested_item ON workflowitem.item_id=harvested_item.item_id WHERE harvested_item.oai_id=?) " +
+        	"dsi JOIN collection ON dsi.collection_id=collection.collection_id WHERE collection.collection_id=?",
+
+            "SELECT dsi.item_id FROM " +
+        	"(SELECT workspaceitem.item_id, workspaceitem.collection_id FROM workspaceitem JOIN harvested_item ON workspaceitem.item_id=harvested_item.item_id WHERE harvested_item.oai_id=?) " +
+        	"dsi JOIN collection ON dsi.collection_id=collection.collection_id WHERE collection.collection_id=?"
+        };
+
+        int itemID = -1;
+        for (String query : queries)
+        {
+            itemID = HarvestedItem.lookup(context, query, itemOaiID, collectionID);
+            if (itemID != -1)
+            {
+                break;
+            }
+        }
+
+        if (itemID != -1)
+        {
+            resolvedItem = Item.find(context, itemID);
+        }
         
+        return resolvedItem;
+    }
+
+    private static int lookup(Context context, String query, String itemOaiID, int collectionID)
+            throws SQLException
+    {
+        TableRowIterator tri = null;
         try
         {
-            tri = DatabaseManager.query(context, selectItemFromOaiId, itemOaiID, collectionID);
+            tri = DatabaseManager.query(context, query, itemOaiID, collectionID);
 
             if (tri.hasNext())
             {
                 TableRow row = tri.next();
                 int itemID = row.getIntColumn("item_id");
-                resolvedItem = Item.find(context, itemID);
+                return itemID;
             }
-            else {
-           	 return null;
+            else
+            {
+                return -1;
             }
         }
-        finally {
+        finally
+        {
             if (tri != null)
             {
                 tri.close();
             }
         }
-
-        return resolvedItem;
     }
-        
+
     /**
      * Create a new harvested item row for a specified item id.  
      * @return a new HarvestedItem object

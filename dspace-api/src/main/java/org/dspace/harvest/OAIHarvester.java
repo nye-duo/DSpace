@@ -491,7 +491,7 @@ public class OAIHarvester {
         {
             ingestionWorkflow = (IngestionWorkflow) PluginManager.getNamedPlugin(IngestionWorkflow.class, workflowProcess);
         }
-        else
+        if (ingestionWorkflow == null)
         {
             ingestionWorkflow = new DefaultIngestionWorkflow();
         }
