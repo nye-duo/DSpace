@@ -87,7 +87,12 @@ public class HarvestedItem
 
             "SELECT dsi.item_id FROM " +
         	"(SELECT workspaceitem.item_id, workspaceitem.collection_id FROM workspaceitem JOIN harvested_item ON workspaceitem.item_id=harvested_item.item_id WHERE harvested_item.oai_id=?) " +
-        	"dsi JOIN collection ON dsi.collection_id=collection.collection_id WHERE collection.collection_id=?"
+        	"dsi JOIN collection ON dsi.collection_id=collection.collection_id WHERE collection.collection_id=?",
+
+            // check the configurable workflow too
+            "SELECT dsi.item_id FROM " +
+        	"(SELECT cwf_workflowitem.item_id, cwf_workflowitem.collection_id FROM cwf_workflowitem JOIN harvested_item ON cwf_workflowitem.item_id=harvested_item.item_id WHERE harvested_item.oai_id=?) " +
+        	"dsi JOIN collection ON dsi.collection_id=collection.collection_id WHERE collection.collection_id=?",
         };
 
         int itemID = -1;
