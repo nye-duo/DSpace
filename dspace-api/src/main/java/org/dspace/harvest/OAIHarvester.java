@@ -221,7 +221,28 @@ public class OAIHarvester {
 	}
 	
 	
-	
+	private void setupEPerson()
+            throws SQLException, IOException, AuthorizeException
+    {
+        EPerson ePerson = ourContext.getCurrentUser();
+
+        // ugly eperson verification/acquisition/error bit
+        if (ePerson == null)
+        {
+            String adminEperson = ConfigurationManager.getProperty("oai", "admin.eperson");
+            ePerson = EPerson.findByEmail(ourContext, adminEperson);
+            if (ePerson == null)
+            {
+                ePerson = EPerson.findByNetid(ourContext, adminEperson);
+            }
+        }
+        if (ePerson == null)
+        {
+            throw new AuthorizeException("No admin eperson defined in oai.admin.eperson, and is required for context of the call - probably need to fix your config");
+        }
+        
+        ourContext.setCurrentUser(ePerson);
+    }
 	
 	
 	/** 
@@ -229,7 +250,11 @@ public class OAIHarvester {
      * harvest, and ingest the returned items. 
      */
 	public void runHarvest() throws SQLException, IOException, AuthorizeException   
-	{    	
+	{
+        // we could wind up here in a context with no eperson, so figure that
+        // out first
+        this.setupEPerson();
+        
 		// figure out the relevant parameters
 		String oaiSource = harvestRow.getOaiSource();
 		String oaiSetId = harvestRow.getOaiSetId();
