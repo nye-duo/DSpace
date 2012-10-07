@@ -582,7 +582,7 @@ public class OAIHarvester {
                     // allow a plugin to remove the bundles if configured
                     String bundleVersioning = harvestRow.getBundleVersioningStrategy();
                     BundleVersioningStrategy bvs = null;
-                    if (bundleVersioning == null)
+                    if (bundleVersioning != null)
                     {
                         bvs = (BundleVersioningStrategy) PluginManager.getNamedPlugin(BundleVersioningStrategy.class, bundleVersioning);
                     }
