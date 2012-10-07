@@ -706,7 +706,16 @@ public class OAIHarvester {
     	// Now create the special ORE bundle and drop the ORE document in it
 		if (harvestRow.getHarvestType() == 2 || harvestRow.getHarvestType() == 3) 
 		{
-			Bundle OREBundle = item.createBundle("ORE");
+            Bundle OREBundle = null;
+            Bundle[] ores = item.getBundles("ORE");
+            if (ores.length > 0)
+            {
+                OREBundle = ores[0];
+            }
+            else
+            {
+			    OREBundle = item.createBundle("ORE");
+            }
 			
 			XMLOutputter outputter = new XMLOutputter();
 			String OREString = outputter.outputString(oreREM);
