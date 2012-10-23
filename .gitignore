@@ -11,7 +11,6 @@ dspace/modules/xmlui/target
 dspace-swordv2/overlays/
 dspace/modules/solr/overlays/
 dspace/modules/swordv2/overlays/
-dspace/modules/xmlui/overlays/
 dspace/modules/jspui/overlays/
 dspace/modules/lni/overlays/
 dspace/modules/oai/overlays/
