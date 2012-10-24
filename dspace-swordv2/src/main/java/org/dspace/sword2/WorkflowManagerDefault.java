@@ -174,6 +174,14 @@ public class WorkflowManagerDefault implements WorkflowManager
 
 	public void addMetadata(Context context, Item item) throws SwordError, DSpaceSwordException
 	{
+        boolean allowUpdate = ConfigurationManager.getBooleanProperty("swordv2-server", "workflowmanagerdefault.always-update-metadata");
+        if (allowUpdate)
+        {
+            // all updates are allowed
+            return;
+        }
+
+        // otherwise, lookup the state of the item
 		WorkflowTools wft = new WorkflowTools();
 		if (item.isArchived() || item.isWithdrawn())
 		{
