@@ -190,7 +190,10 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
                 // if we get to here we are either allowed to access the bitstream without credentials,
                 // or we have been authenticated with acceptable credentials
                 MediaResource mr = this.getBitstreamResource(ctx, bitstream);
-                sc.abort();
+                if (sc != null)
+                {
+                    sc.abort();
+                }
                 if (ctx.isValid())
                 {
                     ctx.abort();
