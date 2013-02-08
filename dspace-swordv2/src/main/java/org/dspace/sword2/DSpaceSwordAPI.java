@@ -72,11 +72,13 @@ public class DSpaceSwordAPI
         // if there is no supplied username, then we should request a retry
         if (authCredentials.getUsername() == null)
         {
+            log.error("no username supplied, unable to proceed with authentication");
             throw new SwordAuthException(true);
         }
 
         // first authenticate the request
         // note: this will build our various DSpace contexts for us
+        log.debug("attempting to authenticate ...");
         SwordAuthenticator auth = new SwordAuthenticator();
         SwordContext sc = auth.authenticate(authCredentials);
 

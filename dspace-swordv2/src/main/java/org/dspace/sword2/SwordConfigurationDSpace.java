@@ -14,9 +14,8 @@ import org.dspace.content.DSpaceObject;
 import org.dspace.content.Item;
 import org.dspace.core.ConfigurationManager;
 import org.dspace.core.Context;
-import org.dspace.core.PluginManager;
-import org.jaxen.function.FalseFunction;
 import org.swordapp.server.SwordConfiguration;
+import org.swordapp.server.SwordConfigurationDefault;
 import org.swordapp.server.SwordError;
 
 import java.sql.SQLException;
@@ -25,7 +24,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-public class SwordConfigurationDSpace implements SwordConfiguration
+public class SwordConfigurationDSpace extends SwordConfigurationDefault implements SwordConfiguration
 {
 	/** logger */
  	public static final Logger log = Logger.getLogger(SwordConfigurationDSpace.class);

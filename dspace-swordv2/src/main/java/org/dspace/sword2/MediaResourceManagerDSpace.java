@@ -140,6 +140,8 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
     public MediaResource getMediaResourceRepresentation(String uri, Map<String, String> accept, AuthCredentials authCredentials, SwordConfiguration swordConfig)
                 throws SwordError, SwordServerException, SwordAuthException
     {
+        log.info("Retrieving Media Resource Representation from " + uri);
+
         // all the bits we need to make this method function
         SwordContext sc = null;
         SwordConfigurationDSpace config = (SwordConfigurationDSpace) swordConfig;
@@ -154,23 +156,30 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
             // is this a request for a bitstream or an item (which is the full media resource)?
             if (urlManager.isActionableBitstreamUrl(ctx, uri))
             {
+                log.debug("Requested media resource is an actionable bistream: " + uri);
+
                 // request for a bitstream
                 Bitstream bitstream = urlManager.getBitstream(ctx, uri);
                 if (bitstream == null)
                 {
                     // bitstream not found in the database, so 404 the client.
                     // Arguably, we should try to authenticate first, but it's not so important
+                    log.error("Requested bitstream does not exist: " + uri);
                     throw new SwordError(404);
                 }
 
                 // find out, now we know what we're being asked for, whether this is allowed
+                log.debug("checking whether bitstream retrieves are allowed");
                 WorkflowManagerFactory.getInstance().retrieveBitstream(ctx, bitstream);
+                log.debug("bitstream retrieves are allowed");
 
                 // we can do this in principle, but now find out whether the bitstream is accessible without credentials
                 boolean accessible = this.isAccessible(ctx, bitstream);
 
                 if (!accessible)
                 {
+                    log.debug("bitstream is not accessible without authentication: " + uri);
+
                     // try to authenticate, and if successful switch the contexts around
                     sc = this.doAuth(authCredentials);
                     ctx.abort();
@@ -183,6 +192,7 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
                     accessible = this.isAccessible(ctx, bitstream);
                     if (!accessible)
                     {
+                        log.info("unable to successfully retrieve bitstream with authentication credentials provided: " + uri);
                         throw new SwordAuthException();
                     }
                 }
@@ -202,6 +212,7 @@ public class MediaResourceManagerDSpace extends DSpaceSwordAPI implements MediaR
             }
             else
             {
+                log.debug("Media resource requested is for a representation of the whole item: " + uri);
                 // request for an item
                 Item item = urlManager.getItem(ctx, uri);
                 if (item == null)
