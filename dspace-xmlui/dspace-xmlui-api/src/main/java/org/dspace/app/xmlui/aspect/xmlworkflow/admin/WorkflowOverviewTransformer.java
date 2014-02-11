@@ -76,7 +76,6 @@ public class WorkflowOverviewTransformer extends AbstractDSpaceTransformer {
     private static final Message T_button_delete = message("xmlui.XMLWorkflow.WorkflowOverviewTransformer.button.submit_delete");
     private static final Message T_no_results = message("xmlui.XMLWorkflow.WorkflowOverviewTransformer.button.no_results");
 
-
     /**
      * Add Page metadata.
      */
@@ -115,6 +114,7 @@ public class WorkflowOverviewTransformer extends AbstractDSpaceTransformer {
             int collectionIdFilter = Util.getIntParameter(request, "filter_collection");
 
             XmlWorkflowItem[] results = XmlWorkflowItem.findAllInCollection(context, page, pageSize, collectionIdFilter);
+
             Para para = div.addPara("result-query", "result-query");
 
             int hitCount = XmlWorkflowItem.countAllInCollection(context, collectionIdFilter);

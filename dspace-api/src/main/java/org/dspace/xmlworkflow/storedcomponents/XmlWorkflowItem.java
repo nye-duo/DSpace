@@ -176,7 +176,7 @@ public class XmlWorkflowItem implements InProgressSubmission {
         List wfItems = new ArrayList();
         StringBuffer query = new StringBuffer();
 
-        query.append("SELECT * FROM cwf_workflowitem ");
+        query.append("SELECT * FROM cwf_workflowitem JOIN item ON cwf_workflowitem.item_id = item.item_id ");
         if(collectionId != -1){
             query.append("WHERE collection_id=").append(collectionId);
         }
@@ -201,6 +201,7 @@ public class XmlWorkflowItem implements InProgressSubmission {
                 query.append(") WHERE rnum>?");
             }
         } else {
+            query.append(" ORDER BY item.last_modified DESC ");
             if (pagesize > 0) {
                 query.append(" LIMIT ? ");
             }

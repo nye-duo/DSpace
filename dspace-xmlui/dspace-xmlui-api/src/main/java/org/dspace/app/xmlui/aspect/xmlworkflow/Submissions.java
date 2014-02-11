@@ -203,6 +203,26 @@ public class Submissions extends AbstractDSpaceTransformer
         return lastmods;
     }
 
+    private TreeMap<Date, ArrayList<XmlWorkflowItem>> orderByLastModified(XmlWorkflowItem[] wfs)
+            throws SQLException, IOException, AuthorizeException
+    {
+        TreeMap<Date, ArrayList<XmlWorkflowItem>> lastmods = new TreeMap<Date, ArrayList<XmlWorkflowItem>>();
+        for (XmlWorkflowItem wfi : wfs)
+        {
+            Date lm = wfi.getItem().getLastModified();
+            if (lastmods.containsKey(lm)) {
+                lastmods.get(lm).add(wfi);
+            }
+            else
+            {
+                ArrayList<XmlWorkflowItem> lms = new ArrayList<XmlWorkflowItem>();
+                lms.add(wfi);
+                lastmods.put(lm, lms);
+            }
+        }
+        return lastmods;
+    }
+
     /**
      * If the user has any workflow tasks, either assigned to them or in an
      * available pool of tasks, then build two tables listing each of these queues.
@@ -530,6 +550,9 @@ public class Submissions extends AbstractDSpaceTransformer
             if (!(inprogressItems.length > 0))
                     return;
 
+            // we need to sort the owned items by last modified date
+            TreeMap<Date, ArrayList<XmlWorkflowItem>> lastmods = this.orderByLastModified(inprogressItems);
+
             Division inprogress = division.addDivision("submissions-inprogress");
             inprogress.setHead(T_p_head1);
             inprogress.addPara(T_p_info1);
@@ -542,42 +565,48 @@ public class Submissions extends AbstractDSpaceTransformer
             header.addCellContent(T_p_column3);
 
 
-            for (XmlWorkflowItem workflowItem : inprogressItems)
+            //for (XmlWorkflowItem workflowItem : inprogressItems)
+            //{
+            int i = 1;
+            for (Date lm : lastmods.descendingKeySet())
             {
-                DCValue[] titles = workflowItem.getItem().getDC("title", null, Item.ANY);
-                String collectionName = workflowItem.getCollection().getMetadata("name");
-                java.util.List<PoolTask> pooltasks = PoolTask.find(context,workflowItem);
-                java.util.List<ClaimedTask> claimedtasks = ClaimedTask.find(context, workflowItem);
-
-                Message state = message("xmlui.XMLWorkflow.step.unknown");
-                for(PoolTask task: pooltasks){
-                    Workflow wf = WorkflowFactory.getWorkflow(workflowItem.getCollection());
-                    Step step = wf.getStep(task.getStepID());
-                    state = message("xmlui.XMLWorkflow." + wf.getID() + "." + step.getId() + "." + task.getActionID());
-                }
-                for(ClaimedTask task: claimedtasks){
-                    Workflow wf = WorkflowFactory.getWorkflow(workflowItem.getCollection());
-                    Step step = wf.getStep(task.getStepID());
-                    state = message("xmlui.XMLWorkflow." + wf.getID() + "." + step.getId() + "." + task.getActionID());
-                }
-                Row row = table.addRow();
-
-                // Add the title column
-                if (titles.length > 0)
+                for (XmlWorkflowItem workflowItem : lastmods.get(lm))
                 {
-                    String displayTitle = titles[0].value;
-                    if (displayTitle.length() > 50)
-                        displayTitle = displayTitle.substring(0,50)+ " ...";
-                    row.addCellContent(displayTitle);
+                    DCValue[] titles = workflowItem.getItem().getDC("title", null, Item.ANY);
+                    String collectionName = workflowItem.getCollection().getMetadata("name");
+                    java.util.List<PoolTask> pooltasks = PoolTask.find(context,workflowItem);
+                    java.util.List<ClaimedTask> claimedtasks = ClaimedTask.find(context, workflowItem);
+
+                    Message state = message("xmlui.XMLWorkflow.step.unknown");
+                    for(PoolTask task: pooltasks){
+                        Workflow wf = WorkflowFactory.getWorkflow(workflowItem.getCollection());
+                        Step step = wf.getStep(task.getStepID());
+                        state = message("xmlui.XMLWorkflow." + wf.getID() + "." + step.getId() + "." + task.getActionID());
+                    }
+                    for(ClaimedTask task: claimedtasks){
+                        Workflow wf = WorkflowFactory.getWorkflow(workflowItem.getCollection());
+                        Step step = wf.getStep(task.getStepID());
+                        state = message("xmlui.XMLWorkflow." + wf.getID() + "." + step.getId() + "." + task.getActionID());
+                    }
+                    Row row = table.addRow();
+
+                    // Add the title column
+                    if (titles.length > 0)
+                    {
+                        String displayTitle = titles[0].value;
+                        if (displayTitle.length() > 50)
+                            displayTitle = displayTitle.substring(0,50)+ " ...";
+                        row.addCellContent(displayTitle);
+                    }
+                    else
+                        row.addCellContent(T_untitled);
+
+                    // Collection name column
+                    row.addCellContent(collectionName);
+
+                    // Status column
+                    row.addCellContent(state);
                 }
-                else
-                    row.addCellContent(T_untitled);
-
-                // Collection name column
-                row.addCellContent(collectionName);
-
-                // Status column
-                row.addCellContent(state);
             }
         }  catch (Exception e) {
             Row row = division.addTable("table0",1,1).addRow();
