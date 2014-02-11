@@ -101,6 +101,20 @@ public class Submissions extends AbstractDSpaceTransformer
 
     private static final Logger log = Logger.getLogger(Submissions.class);
 
+    // inner class used for relating ClaimedTasks to XmlWorkflowItems, so
+    // that they can be tagged and sorted by last modified date
+    class TWF
+    {
+        public PoolTask pt= null;
+        public ClaimedTask ct = null;
+        public XmlWorkflowItem wf = null;
+        public TWF(PoolTask pt, ClaimedTask ct, XmlWorkflowItem wf)
+        {
+            this.pt = pt;
+            this.ct = ct;
+            this.wf = wf;
+        }
+    }
 
 	public void addPageMeta(PageMeta pageMeta) throws SAXException,
 	WingException, SQLException, IOException,
@@ -128,6 +142,59 @@ public class Submissions extends AbstractDSpaceTransformer
 
     private void addWorkflowTasksDiv(Division division) throws SQLException, WingException, AuthorizeException, IOException {
     	division.addDivision("start-submision");
+    }
+
+    /**
+     * A bit hacky, but useful for separating this from the main layout code.
+     *
+     * Takes a list of ClaimedTasks or PoolTasks, and makes a TWF inner class instance of them
+     * in a TreeMap which allows you to access the results sorted.
+     *
+     * @param cts
+     * @param pts
+     * @return
+     * @throws SQLException
+     * @throws IOException
+     * @throws AuthorizeException
+     */
+    private TreeMap<Date, ArrayList<TWF>> orderByLastModified(java.util.List<ClaimedTask> cts, java.util.List<PoolTask> pts)
+            throws SQLException, IOException, AuthorizeException
+    {
+        TreeMap<Date, ArrayList<TWF>> lastmods = new TreeMap<Date, ArrayList<TWF>>();
+
+        for (ClaimedTask ct : cts)
+        {
+            int workflowItemID = ct.getWorkflowItemID();
+            XmlWorkflowItem item = XmlWorkflowItem.find(context, workflowItemID);
+            Date lm = item.getItem().getLastModified();
+            if (lastmods.containsKey(lm)) {
+                lastmods.get(lm).add(new TWF(null, ct, item));
+            }
+            else
+            {
+                ArrayList<TWF> lms = new ArrayList<TWF>();
+                lms.add(new TWF(null, ct, item));
+                lastmods.put(lm, lms);
+            }
+        }
+
+        for (PoolTask pt : pts)
+        {
+            int workflowItemID = pt.getWorkflowItemID();
+            XmlWorkflowItem item = XmlWorkflowItem.find(context, workflowItemID);
+            Date lm = item.getItem().getLastModified();
+            if (lastmods.containsKey(lm)) {
+                lastmods.get(lm).add(new TWF(pt, null, item));
+            }
+            else
+            {
+                ArrayList<TWF> lms = new ArrayList<TWF>();
+                lms.add(new TWF(pt, null, item));
+                lastmods.put(lm, lms);
+            }
+        }
+
+        return lastmods;
     }
 
     /**
@@ -171,40 +238,14 @@ public class Submissions extends AbstractDSpaceTransformer
         if (ownedItems.size() > 0)
         {
             // we need to sort the owned items by last modified date
-            class CTWF
-            {
-                public ClaimedTask ct = null;
-                public XmlWorkflowItem wf = null;
-                public CTWF(ClaimedTask ct, XmlWorkflowItem wf)
-                {
-                    this.ct = ct;
-                    this.wf = wf;
-                }
-            }
-            TreeMap<Date, ArrayList<CTWF>> lastmods = new TreeMap<Date, ArrayList<CTWF>>();
-
-            for (ClaimedTask owned : ownedItems)
-            {
-                int workflowItemID = owned.getWorkflowItemID();
-                XmlWorkflowItem item = XmlWorkflowItem.find(context, workflowItemID);
-                Date lm = item.getItem().getLastModified();
-                if (lastmods.containsKey(lm)) {
-                    lastmods.get(lm).add(new CTWF(owned, item));
-                }
-                else
-                {
-                    ArrayList<CTWF> lms = new ArrayList<CTWF>();
-                    lms.add(new CTWF(owned, item));
-                    lastmods.put(lm, lms);
-                }
-            }
+            TreeMap<Date, ArrayList<TWF>> lastmods = this.orderByLastModified(ownedItems, null);
 
             int i = 1;
             //for (ClaimedTask owned : ownedItems)
             //{
             for (Date lm : lastmods.descendingKeySet())
             {
-                for (CTWF ctwf : lastmods.get(lm))
+                for (TWF ctwf : lastmods.get(lm))
                 {
                     XmlWorkflowItem item = ctwf.wf;
                     ClaimedTask owned = ctwf.ct;
@@ -340,95 +381,104 @@ public class Submissions extends AbstractDSpaceTransformer
 
         if (pooledItems.size() > 0)
         {
+            // we need to sort the owned items by last modified date
+            TreeMap<Date, ArrayList<TWF>> lastmods = this.orderByLastModified(null, pooledItems);
+
             int i = 1;
-        	for (PoolTask pooled : pooledItems)
-        	{
-                String stepID = pooled.getStepID();
-                int workflowItemID = pooled.getWorkflowItemID();
-                String actionID = pooled.getActionID();
-                    XmlWorkflowItem item;
-                try {
-                    item = XmlWorkflowItem.find(context, workflowItemID);
-                    Workflow wf = WorkflowFactory.getWorkflow(item.getCollection());
-                    String url = contextPath+"/handle/"+item.getCollection().getHandle()+"/xmlworkflow?workflowID="+workflowItemID+"&stepID="+stepID+"&actionID="+actionID;
-                    DCValue[] titles = item.getItem().getDC("title", null, Item.ANY);
-                    String collectionName = item.getCollection().getMetadata("name");
-                    EPerson submitter = item.getSubmitter();
-                    String submitterName = submitter.getFullName();
-                    String submitterEmail = submitter.getEmail();
+        	//for (PoolTask pooled : pooledItems)
+        	//{
+            for (Date lm : lastmods.descendingKeySet())
+            {
+                for (TWF ctwf : lastmods.get(lm))
+                {
+                    XmlWorkflowItem item = ctwf.wf;
+                    PoolTask pooled = ctwf.pt;
 
-    //        		Message state = getWorkflowStateMessage(pooled);
+                    String stepID = pooled.getStepID();
+                    int workflowItemID = pooled.getWorkflowItemID();
+                    String actionID = pooled.getActionID();
+                    // XmlWorkflowItem item;
+                    try {
+                        item = XmlWorkflowItem.find(context, workflowItemID);
+                        Workflow wf = WorkflowFactory.getWorkflow(item.getCollection());
+                        String url = contextPath+"/handle/"+item.getCollection().getHandle()+"/xmlworkflow?workflowID="+workflowItemID+"&stepID="+stepID+"&actionID="+actionID;
+                        DCValue[] titles = item.getItem().getDC("title", null, Item.ANY);
+                        String collectionName = item.getCollection().getMetadata("name");
+                        EPerson submitter = item.getSubmitter();
+                        String submitterName = submitter.getFullName();
+                        String submitterEmail = submitter.getEmail();
 
-                    // get the unit code
-                    String cfg = ConfigurationManager.getProperty("cristin", "unitcode.field");
-                    String unitcodes = "";
-                    if (cfg != null)
-                    {
-                        DCValue[] unitcodeDC = item.getItem().getMetadata(cfg);
-                        if (unitcodeDC.length > 0)
+                        // get the unit code
+                        String cfg = ConfigurationManager.getProperty("cristin", "unitcode.field");
+                        String unitcodes = "";
+                        if (cfg != null)
                         {
-                            for (DCValue uc : unitcodeDC)
+                            DCValue[] unitcodeDC = item.getItem().getMetadata(cfg);
+                            if (unitcodeDC.length > 0)
                             {
-                                if (!"".equals(unitcodes)) { unitcodes += ", "; }
-                                unitcodes += uc.value;
+                                for (DCValue uc : unitcodeDC)
+                                {
+                                    if (!"".equals(unitcodes)) { unitcodes += ", "; }
+                                    unitcodes += uc.value;
+                                }
                             }
                         }
-                    }
 
-                    // get the authors
-                    String authors = "";
-                    DCValue[] authorDC = item.getItem().getMetadata("dc.creator.author");
-                    if (authorDC.length > 0)
-                    {
-                        for (DCValue au : authorDC)
+                        // get the authors
+                        String authors = "";
+                        DCValue[] authorDC = item.getItem().getMetadata("dc.creator.author");
+                        if (authorDC.length > 0)
                         {
-                            if (!"".equals(authors)) { authors += ", "; }
-                            authors += au.value;
+                            for (DCValue au : authorDC)
+                            {
+                                if (!"".equals(authors)) { authors += ", "; }
+                                authors += au.value;
+                            }
                         }
+
+                        Row row = table.addRow();
+
+                        // row counter
+                        row.addCell().addContent(i++);
+
+                        CheckBox claimTask = row.addCell().addCheckBox("workflowID");
+                        claimTask.setLabel("selected");
+                        claimTask.addOption(workflowItemID);
+
+                        // The task description
+                        // row.addCell().addXref(url,message("xmlui.Submission.Submissions.claimAction"));
+                        row.addCell().addXref(url,message("xmlui.XMLWorkflow." + wf.getID() + "." + stepID + "." + actionID));
+
+                        // The item description
+                        if (titles != null && titles.length > 0)
+                        {
+                            String displayTitle = titles[0].value;
+                            if (displayTitle.length() > 50)
+                                displayTitle = displayTitle.substring(0,50)+ " ...";
+
+                            row.addCell().addXref(url,displayTitle);
+                        }
+                        else
+                            row.addCell().addXref(url,T_untitled);
+
+                        // Submitted too
+                        row.addCell().addXref(url,collectionName);
+
+                        // Submitted by
+                        //Cell cell = row.addCell();
+                        //cell.addContent(T_email);
+                        //cell.addXref("mailto:"+submitterEmail,submitterName);
+
+                        row.addCell().addContent(authors);
+                        row.addCell().addContent(unitcodes);
+
+                    } catch (WorkflowConfigurationException e) {
+                        Row row = table.addRow();
+                        row.addCell().addContent("Error: Configuration error in workflow.");
+                        log.error(LogManager.getHeader(context, "Error while adding pooled tasks on the submissions page", ""), e);
+                    } catch (Exception e) {
+                        log.error(LogManager.getHeader(context, "Error while adding pooled tasks on the submissions page", ""), e);
                     }
-
-                    Row row = table.addRow();
-
-                    // row counter
-                    row.addCell().addContent(i++);
-
-                    CheckBox claimTask = row.addCell().addCheckBox("workflowID");
-                    claimTask.setLabel("selected");
-                    claimTask.addOption(workflowItemID);
-
-                    // The task description
-//                    row.addCell().addXref(url,message("xmlui.Submission.Submissions.claimAction"));
-                    row.addCell().addXref(url,message("xmlui.XMLWorkflow." + wf.getID() + "." + stepID + "." + actionID));
-
-                    // The item description
-                    if (titles != null && titles.length > 0)
-                    {
-                        String displayTitle = titles[0].value;
-                        if (displayTitle.length() > 50)
-                            displayTitle = displayTitle.substring(0,50)+ " ...";
-
-                        row.addCell().addXref(url,displayTitle);
-                    }
-                    else
-                        row.addCell().addXref(url,T_untitled);
-
-                    // Submitted too
-                    row.addCell().addXref(url,collectionName);
-
-                    // Submitted by
-                    //Cell cell = row.addCell();
-                    //cell.addContent(T_email);
-                    //cell.addXref("mailto:"+submitterEmail,submitterName);
-
-                    row.addCell().addContent(authors);
-                    row.addCell().addContent(unitcodes);
-
-                } catch (WorkflowConfigurationException e) {
-                    Row row = table.addRow();
-                    row.addCell().addContent("Error: Configuration error in workflow.");
-                    log.error(LogManager.getHeader(context, "Error while adding pooled tasks on the submissions page", ""), e);
-                } catch (Exception e) {
-                    log.error(LogManager.getHeader(context, "Error while adding pooled tasks on the submissions page", ""), e);
                 }
             }
         	Row row = table.addRow();
