@@ -31,6 +31,11 @@ import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * @author Bram De Schouwer (bram.deschouwer at dot com)
@@ -165,105 +170,142 @@ public class Submissions extends AbstractDSpaceTransformer
         boolean showReturnToPoolButton = false;
         if (ownedItems.size() > 0)
         {
-            int i = 1;
-        	for (ClaimedTask owned : ownedItems)
-        	{
+            // we need to sort the owned items by last modified date
+            class CTWF
+            {
+                public ClaimedTask ct = null;
+                public XmlWorkflowItem wf = null;
+                public CTWF(ClaimedTask ct, XmlWorkflowItem wf)
+                {
+                    this.ct = ct;
+                    this.wf = wf;
+                }
+            }
+            TreeMap<Date, ArrayList<CTWF>> lastmods = new TreeMap<Date, ArrayList<CTWF>>();
+
+            for (ClaimedTask owned : ownedItems)
+            {
                 int workflowItemID = owned.getWorkflowItemID();
-                String stepID = owned.getStepID();
-                String actionID = owned.getActionID();
-                XmlWorkflowItem item = null;
-                try {
-                    item = XmlWorkflowItem.find(context, workflowItemID);
-                    Workflow wf = WorkflowFactory.getWorkflow(item.getCollection());
-                    Step step = wf.getStep(stepID);
-                    WorkflowActionConfig action = step.getActionConfig(actionID);
-                    String url = contextPath+"/handle/"+item.getCollection().getHandle()+"/xmlworkflow?workflowID="+workflowItemID+"&stepID="+stepID+"&actionID="+actionID;
-                    DCValue[] titles = item.getItem().getDC("title", null, Item.ANY);
-                    String collectionName = item.getCollection().getMetadata("name");
-                    EPerson submitter = item.getSubmitter();
-                    String submitterName = submitter.getFullName();
-                    String submitterEmail = submitter.getEmail();
+                XmlWorkflowItem item = XmlWorkflowItem.find(context, workflowItemID);
+                Date lm = item.getItem().getLastModified();
+                if (lastmods.containsKey(lm)) {
+                    lastmods.get(lm).add(new CTWF(owned, item));
+                }
+                else
+                {
+                    ArrayList<CTWF> lms = new ArrayList<CTWF>();
+                    lms.add(new CTWF(owned, item));
+                    lastmods.put(lm, lms);
+                }
+            }
 
-    //        		Message state = getWorkflowStateMessage(owned);
+            int i = 1;
+            //for (ClaimedTask owned : ownedItems)
+            //{
+            for (Date lm : lastmods.descendingKeySet())
+            {
+                for (CTWF ctwf : lastmods.get(lm))
+                {
+                    XmlWorkflowItem item = ctwf.wf;
+                    ClaimedTask owned = ctwf.ct;
 
-                    boolean taskHasPool = step.getUserSelectionMethod().getProcessingAction().usesTaskPool();
-                    if(taskHasPool){
-                        //We have a workflow item that uses a pool, ensure we see the return to pool button
-                        showReturnToPoolButton = true;
-                    }
+                    int workflowItemID = owned.getWorkflowItemID();
+                    String stepID = owned.getStepID();
+                    String actionID = owned.getActionID();
+                    // XmlWorkflowItem item = null;
 
-                    // get the unit code
-                    String cfg = ConfigurationManager.getProperty("cristin", "unitcode.field");
-                    String unitcodes = "";
-                    if (cfg != null)
-                    {
-                        DCValue[] unitcodeDC = item.getItem().getMetadata(cfg);
-                        if (unitcodeDC.length > 0)
+                    try {
+                        item = XmlWorkflowItem.find(context, workflowItemID);
+                        Workflow wf = WorkflowFactory.getWorkflow(item.getCollection());
+                        Step step = wf.getStep(stepID);
+                        WorkflowActionConfig action = step.getActionConfig(actionID);
+                        String url = contextPath+"/handle/"+item.getCollection().getHandle()+"/xmlworkflow?workflowID="+workflowItemID+"&stepID="+stepID+"&actionID="+actionID;
+                        DCValue[] titles = item.getItem().getDC("title", null, Item.ANY);
+                        String collectionName = item.getCollection().getMetadata("name");
+                        EPerson submitter = item.getSubmitter();
+                        String submitterName = submitter.getFullName();
+                        String submitterEmail = submitter.getEmail();
+
+
+                        boolean taskHasPool = step.getUserSelectionMethod().getProcessingAction().usesTaskPool();
+                        if(taskHasPool){
+                            //We have a workflow item that uses a pool, ensure we see the return to pool button
+                            showReturnToPoolButton = true;
+                        }
+
+                        // get the unit code
+                        String cfg = ConfigurationManager.getProperty("cristin", "unitcode.field");
+                        String unitcodes = "";
+                        if (cfg != null)
                         {
-                            for (DCValue uc : unitcodeDC)
+                            DCValue[] unitcodeDC = item.getItem().getMetadata(cfg);
+                            if (unitcodeDC.length > 0)
                             {
-                                if (!"".equals(unitcodes)) { unitcodes += ", "; }
-                                unitcodes += uc.value;
+                                for (DCValue uc : unitcodeDC)
+                                {
+                                    if (!"".equals(unitcodes)) { unitcodes += ", "; }
+                                    unitcodes += uc.value;
+                                }
                             }
                         }
-                    }
 
-                    // get the authors
-                    String authors = "";
-                    DCValue[] authorDC = item.getItem().getMetadata("dc.creator.author");
-                    if (authorDC.length > 0)
-                    {
-                        for (DCValue au : authorDC)
+                        // get the authors
+                        String authors = "";
+                        DCValue[] authorDC = item.getItem().getMetadata("dc.creator.author");
+                        if (authorDC.length > 0)
                         {
-                            if (!"".equals(authors)) { authors += ", "; }
-                            authors += au.value;
+                            for (DCValue au : authorDC)
+                            {
+                                if (!"".equals(authors)) { authors += ", "; }
+                                authors += au.value;
+                            }
                         }
+
+                        Row row = table.addRow();
+
+                        // row counter
+                        row.addCell().addContent(i++);
+
+                        Cell firstCell = row.addCell();
+                        if(taskHasPool){
+                            CheckBox remove = firstCell.addCheckBox("workflowandstepID");
+                            remove.setLabel("selected");
+                            remove.addOption(workflowItemID + ":" + step.getId());
+                        }
+
+                        // The task description
+                        row.addCell().addXref(url,message("xmlui.XMLWorkflow." + wf.getID() + "." + stepID + "." + actionID));
+
+                        // The item description
+                        if (titles != null && titles.length > 0)
+                        {
+                            String displayTitle = titles[0].value;
+                            if (displayTitle.length() > 50)
+                                displayTitle = displayTitle.substring(0,50)+ " ...";
+                            row.addCell().addXref(url,displayTitle);
+                        }
+                        else
+                            row.addCell().addXref(url,T_untitled);
+
+                        // Submitted too
+                        row.addCell().addXref(url,collectionName);
+
+                        // Submitted by
+                        //Cell cell = row.addCell();
+                        //cell.addContent(T_email);
+                        //cell.addXref("mailto:"+submitterEmail,submitterName);
+
+                        row.addCell().addContent(authors);
+                        row.addCell().addContent(unitcodes);
+
+                    } catch (WorkflowConfigurationException e) {
+                        Row row = table.addRow();
+                        row.addCell().addContent("Error: Configuration error in workflow.");
+                        log.error(LogManager.getHeader(context, "Error while adding owned tasks on the submissions page", ""), e);
+
+                    } catch (Exception e) {
+                        log.error(LogManager.getHeader(context, "Error while adding owned tasks on the submissions page", ""), e);
                     }
-
-                    Row row = table.addRow();
-
-                    // row counter
-                    row.addCell().addContent(i++);
-
-                    Cell firstCell = row.addCell();
-                    if(taskHasPool){
-                        CheckBox remove = firstCell.addCheckBox("workflowandstepID");
-                        remove.setLabel("selected");
-                        remove.addOption(workflowItemID + ":" + step.getId());
-                    }
-
-                    // The task description
-                    row.addCell().addXref(url,message("xmlui.XMLWorkflow." + wf.getID() + "." + stepID + "." + actionID));
-
-                    // The item description
-                    if (titles != null && titles.length > 0)
-                    {
-                        String displayTitle = titles[0].value;
-                        if (displayTitle.length() > 50)
-                            displayTitle = displayTitle.substring(0,50)+ " ...";
-                        row.addCell().addXref(url,displayTitle);
-                    }
-                    else
-                        row.addCell().addXref(url,T_untitled);
-
-                    // Submitted too
-                    row.addCell().addXref(url,collectionName);
-
-                    // Submitted by
-                    //Cell cell = row.addCell();
-                    //cell.addContent(T_email);
-                    //cell.addXref("mailto:"+submitterEmail,submitterName);
-
-                    row.addCell().addContent(authors);
-                    row.addCell().addContent(unitcodes);
-
-                } catch (WorkflowConfigurationException e) {
-                    Row row = table.addRow();
-                    row.addCell().addContent("Error: Configuration error in workflow.");
-                    log.error(LogManager.getHeader(context, "Error while adding owned tasks on the submissions page", ""), e);
-
-                } catch (Exception e) {
-                    log.error(LogManager.getHeader(context, "Error while adding owned tasks on the submissions page", ""), e);
                 }
             }
 
