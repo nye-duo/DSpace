@@ -155,7 +155,7 @@ public class WorkflowOverviewTransformer extends AbstractDSpaceTransformer {
                 headerRow.addCellContent("Author(s)");
                 headerRow.addCellContent("Unit code");
 
-                int i = 0;
+                int i = 1;
                 for (XmlWorkflowItem wfi : results) {
                     Item item = wfi.getItem();
                     Row itemRow = table.addRow();
