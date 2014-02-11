@@ -16,6 +16,7 @@ import org.dspace.app.xmlui.wing.element.*;
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.*;
 import org.dspace.content.Item;
+import org.dspace.core.ConfigurationManager;
 import org.dspace.core.LogManager;
 import org.dspace.eperson.EPerson;
 import org.dspace.xmlworkflow.WorkflowConfigurationException;
@@ -151,16 +152,20 @@ public class Submissions extends AbstractDSpaceTransformer
     	Table table = workflow.addTable("workflow-tasks",ownedItems.size() + 2,5);
         table.setHead(T_w_head2);
         Row header = table.addRow(Row.ROLE_HEADER);
+        header.addCellContent(" ");
         header.addCellContent(T_w_column1);
         header.addCellContent(T_w_column2);
         header.addCellContent(T_w_column3);
         header.addCellContent(T_w_column4);
-        header.addCellContent(T_w_column5);
+        // header.addCellContent(T_w_column5);
+        header.addCellContent("Author(s)");
+        header.addCellContent("Unit code");
 
         //Only show our return to pool button if we have a task that CAN be returned to a pool
         boolean showReturnToPoolButton = false;
         if (ownedItems.size() > 0)
         {
+            int i = 1;
         	for (ClaimedTask owned : ownedItems)
         	{
                 int workflowItemID = owned.getWorkflowItemID();
@@ -187,7 +192,38 @@ public class Submissions extends AbstractDSpaceTransformer
                         showReturnToPoolButton = true;
                     }
 
+                    // get the unit code
+                    String cfg = ConfigurationManager.getProperty("cristin", "unitcode.field");
+                    String unitcodes = "";
+                    if (cfg != null)
+                    {
+                        DCValue[] unitcodeDC = item.getItem().getMetadata(cfg);
+                        if (unitcodeDC.length > 0)
+                        {
+                            for (DCValue uc : unitcodeDC)
+                            {
+                                if (!"".equals(unitcodes)) { unitcodes += ", "; }
+                                unitcodes += uc.value;
+                            }
+                        }
+                    }
+
+                    // get the authors
+                    String authors = "";
+                    DCValue[] authorDC = item.getItem().getMetadata("dc.creator.author");
+                    if (authorDC.length > 0)
+                    {
+                        for (DCValue au : authorDC)
+                        {
+                            if (!"".equals(authors)) { authors += ", "; }
+                            authors += au.value;
+                        }
+                    }
+
                     Row row = table.addRow();
+
+                    // row counter
+                    row.addCell().addContent(i++);
 
                     Cell firstCell = row.addCell();
                     if(taskHasPool){
@@ -214,9 +250,13 @@ public class Submissions extends AbstractDSpaceTransformer
                     row.addCell().addXref(url,collectionName);
 
                     // Submitted by
-                    Cell cell = row.addCell();
-                    cell.addContent(T_email);
-                    cell.addXref("mailto:"+submitterEmail,submitterName);
+                    //Cell cell = row.addCell();
+                    //cell.addContent(T_email);
+                    //cell.addXref("mailto:"+submitterEmail,submitterName);
+
+                    row.addCell().addContent(authors);
+                    row.addCell().addContent(unitcodes);
+
                 } catch (WorkflowConfigurationException e) {
                     Row row = table.addRow();
                     row.addCell().addContent("Error: Configuration error in workflow.");
@@ -247,15 +287,18 @@ public class Submissions extends AbstractDSpaceTransformer
         table.setHead(T_w_head3);
 
         header = table.addRow(Row.ROLE_HEADER);
+        header.addCellContent(" ");
         header.addCellContent(T_w_column1);
         header.addCellContent(T_w_column2);
         header.addCellContent(T_w_column3);
         header.addCellContent(T_w_column4);
-        header.addCellContent(T_w_column5);
+        // header.addCellContent(T_w_column5);
+        header.addCellContent("Author(s)");
+        header.addCellContent("Unit code");
 
         if (pooledItems.size() > 0)
         {
-
+            int i = 1;
         	for (PoolTask pooled : pooledItems)
         	{
                 String stepID = pooled.getStepID();
@@ -274,8 +317,38 @@ public class Submissions extends AbstractDSpaceTransformer
 
     //        		Message state = getWorkflowStateMessage(pooled);
 
+                    // get the unit code
+                    String cfg = ConfigurationManager.getProperty("cristin", "unitcode.field");
+                    String unitcodes = "";
+                    if (cfg != null)
+                    {
+                        DCValue[] unitcodeDC = item.getItem().getMetadata(cfg);
+                        if (unitcodeDC.length > 0)
+                        {
+                            for (DCValue uc : unitcodeDC)
+                            {
+                                if (!"".equals(unitcodes)) { unitcodes += ", "; }
+                                unitcodes += uc.value;
+                            }
+                        }
+                    }
+
+                    // get the authors
+                    String authors = "";
+                    DCValue[] authorDC = item.getItem().getMetadata("dc.creator.author");
+                    if (authorDC.length > 0)
+                    {
+                        for (DCValue au : authorDC)
+                        {
+                            if (!"".equals(authors)) { authors += ", "; }
+                            authors += au.value;
+                        }
+                    }
 
                     Row row = table.addRow();
+
+                    // row counter
+                    row.addCell().addContent(i++);
 
                     CheckBox claimTask = row.addCell().addCheckBox("workflowID");
                     claimTask.setLabel("selected");
@@ -301,9 +374,13 @@ public class Submissions extends AbstractDSpaceTransformer
                     row.addCell().addXref(url,collectionName);
 
                     // Submitted by
-                    Cell cell = row.addCell();
-                    cell.addContent(T_email);
-                    cell.addXref("mailto:"+submitterEmail,submitterName);
+                    //Cell cell = row.addCell();
+                    //cell.addContent(T_email);
+                    //cell.addXref("mailto:"+submitterEmail,submitterName);
+
+                    row.addCell().addContent(authors);
+                    row.addCell().addContent(unitcodes);
+
                 } catch (WorkflowConfigurationException e) {
                     Row row = table.addRow();
                     row.addCell().addContent("Error: Configuration error in workflow.");
