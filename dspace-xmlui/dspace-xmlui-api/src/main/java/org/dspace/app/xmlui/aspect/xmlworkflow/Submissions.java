@@ -162,35 +162,41 @@ public class Submissions extends AbstractDSpaceTransformer
     {
         TreeMap<Date, ArrayList<TWF>> lastmods = new TreeMap<Date, ArrayList<TWF>>();
 
-        for (ClaimedTask ct : cts)
+        if (cts != null)
         {
-            int workflowItemID = ct.getWorkflowItemID();
-            XmlWorkflowItem item = XmlWorkflowItem.find(context, workflowItemID);
-            Date lm = item.getItem().getLastModified();
-            if (lastmods.containsKey(lm)) {
-                lastmods.get(lm).add(new TWF(null, ct, item));
-            }
-            else
+            for (ClaimedTask ct : cts)
             {
-                ArrayList<TWF> lms = new ArrayList<TWF>();
-                lms.add(new TWF(null, ct, item));
-                lastmods.put(lm, lms);
+                int workflowItemID = ct.getWorkflowItemID();
+                XmlWorkflowItem item = XmlWorkflowItem.find(context, workflowItemID);
+                Date lm = item.getItem().getLastModified();
+                if (lastmods.containsKey(lm)) {
+                    lastmods.get(lm).add(new TWF(null, ct, item));
+                }
+                else
+                {
+                    ArrayList<TWF> lms = new ArrayList<TWF>();
+                    lms.add(new TWF(null, ct, item));
+                    lastmods.put(lm, lms);
+                }
             }
         }
 
-        for (PoolTask pt : pts)
+        if (pts != null)
         {
-            int workflowItemID = pt.getWorkflowItemID();
-            XmlWorkflowItem item = XmlWorkflowItem.find(context, workflowItemID);
-            Date lm = item.getItem().getLastModified();
-            if (lastmods.containsKey(lm)) {
-                lastmods.get(lm).add(new TWF(pt, null, item));
-            }
-            else
+            for (PoolTask pt : pts)
             {
-                ArrayList<TWF> lms = new ArrayList<TWF>();
-                lms.add(new TWF(pt, null, item));
-                lastmods.put(lm, lms);
+                int workflowItemID = pt.getWorkflowItemID();
+                XmlWorkflowItem item = XmlWorkflowItem.find(context, workflowItemID);
+                Date lm = item.getItem().getLastModified();
+                if (lastmods.containsKey(lm)) {
+                    lastmods.get(lm).add(new TWF(pt, null, item));
+                }
+                else
+                {
+                    ArrayList<TWF> lms = new ArrayList<TWF>();
+                    lms.add(new TWF(pt, null, item));
+                    lastmods.put(lm, lms);
+                }
             }
         }
 
