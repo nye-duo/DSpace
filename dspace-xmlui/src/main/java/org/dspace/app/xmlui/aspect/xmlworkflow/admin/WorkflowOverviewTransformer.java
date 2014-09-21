@@ -20,7 +20,9 @@ import org.dspace.app.xmlui.wing.element.*;
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.authorize.AuthorizeManager;
 import org.dspace.content.Collection;
+import org.dspace.content.DCValue;
 import org.dspace.content.Item;
+import org.dspace.core.ConfigurationManager;
 import org.dspace.core.Context;
 import org.dspace.core.LogManager;
 import org.dspace.handle.HandleManager;
@@ -144,13 +146,16 @@ public class WorkflowOverviewTransformer extends AbstractDSpaceTransformer {
                 Table table = resultsDiv.addTable("workflow-item-overview-table", results.length + 1, 5);
 
                 Row headerRow = table.addRow(Row.ROLE_HEADER);
+                headerRow.addCellContent(" ");
                 headerRow.addCellContent(T_search_column1);
                 headerRow.addCellContent(T_search_column2);
                 headerRow.addCellContent(T_search_column3);
                 headerRow.addCellContent(T_search_column4);
-                headerRow.addCellContent(T_search_column5);
+                // headerRow.addCellContent(T_search_column5);
+                headerRow.addCellContent("Author(s)");
+                headerRow.addCellContent("Unit code");
 
-
+                int i = 1;
                 for (XmlWorkflowItem wfi : results) {
                     Item item = wfi.getItem();
                     Row itemRow = table.addRow();
@@ -170,6 +175,36 @@ public class WorkflowOverviewTransformer extends AbstractDSpaceTransformer {
                         state = message("xmlui.XMLWorkflow." + wf.getID() + "." + step.getId());
                     }
 
+                    // get the unit code
+                    String cfg = ConfigurationManager.getProperty("cristin", "unitcode.field");
+                    String unitcodes = "";
+                    if (cfg != null)
+                    {
+                        DCValue[] unitcodeDC = item.getMetadata(cfg);
+                        if (unitcodeDC.length > 0)
+                        {
+                            for (DCValue uc : unitcodeDC)
+                            {
+                                if (!"".equals(unitcodes)) { unitcodes += ", "; }
+                                unitcodes += uc.value;
+                            }
+                        }
+                    }
+
+                    // get the authors
+                    String authors = "";
+                    DCValue[] authorDC = item.getMetadata("dc.creator.author");
+                    if (authorDC.length > 0)
+                    {
+                        for (DCValue au : authorDC)
+                        {
+                            if (!"".equals(authors)) { authors += ", "; }
+                            authors += au.value;
+                        }
+                    }
+
+                    // add a row number
+                    itemRow.addCell().addContent(i++);
 
                     //Column 0 task Checkbox to delete
                     itemRow.addCell().addCheckBox("workflow_id").addOption(wfi.getID());
@@ -181,9 +216,10 @@ public class WorkflowOverviewTransformer extends AbstractDSpaceTransformer {
                     //Column 3 collection
                     itemRow.addCell().addXref(HandleManager.resolveToURL(context, wfi.getCollection().getHandle()), wfi.getCollection().getName());
                     //Column 4 submitter
-                    itemRow.addCell().addXref("mailto:" + wfi.getSubmitter().getEmail(), wfi.getSubmitter().getFullName());
+                    // itemRow.addCell().addXref("mailto:" + wfi.getSubmitter().getEmail(), wfi.getSubmitter().getFullName());
 
-
+                    itemRow.addCell().addContent(authors);
+                    itemRow.addCell().addContent(unitcodes);
 
                 }
 

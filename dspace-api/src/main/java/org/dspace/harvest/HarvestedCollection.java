@@ -401,9 +401,60 @@ public class HarvestedCollection
     public Date getHarvestStartTime() {
     	return harvestRow.getDateColumn("harvest_start_time");
     }
-    
-    
-    
+
+    public String getMetadataAuthorityType()
+    {
+        return harvestRow.getStringColumn("metadata_authority_type");
+    }
+
+    public void setMetadataAuthorityType(String authorityType)
+    {
+        if (authorityType != null)
+        {
+            harvestRow.setColumn("metadata_authority_type", authorityType);
+        }
+    }
+
+    public String getBundleVersioningStrategy()
+    {
+        return harvestRow.getStringColumn("bundle_versioning_strategy");
+    }
+
+    public void setBundleVersioningStrategy(String strategy)
+    {
+        if (strategy != null)
+        {
+            harvestRow.setColumn("bundle_versioning_strategy", strategy);
+        }
+    }
+
+    public String getWorkflowProcess()
+    {
+        return harvestRow.getStringColumn("workflow_process");
+    }
+
+    public void setWorkflowProcess(String workflowProcess)
+    {
+        if (workflowProcess != null)
+        {
+            harvestRow.setColumn("workflow_process", workflowProcess);
+        }
+    }
+
+    public String getIngestFilter()
+    {
+        return harvestRow.getStringColumn("ingest_filter");
+    }
+
+    public void setIngestFilter(String ingestFilter)
+    {
+        if (ingestFilter != null)
+        {
+            harvestRow.setColumn("ingest_filter", ingestFilter);
+        }
+    }
+
+
     public void delete() throws SQLException {
     	DatabaseManager.delete(context, harvestRow);
     }
