@@ -76,6 +76,8 @@ public class HarvestedItem
          */
    	 	Item resolvedItem = null;
 
+        // there are a variety of queries that might tell us where an item is - it could be in the workflow, for example,
+        // so we have to hunt about a bit.  Not really optimal, but what are you gonna do, eh?!
         String[] queries = {
             "SELECT dsi.item_id FROM " +
         	"(SELECT item.item_id, item.owning_collection FROM item JOIN harvested_item ON item.item_id=harvested_item.item_id WHERE harvested_item.oai_id=?) " + 

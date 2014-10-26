@@ -212,7 +212,14 @@ public class OAIHarvester {
         return null;
 	}
 
-
+    /**
+     * In the event that we are running outside a user context, this method sets up an eperson
+     * based on the configuration
+     *
+     * @throws SQLException
+     * @throws IOException
+     * @throws AuthorizeException
+     */
 	private void setupEPerson()
             throws SQLException, IOException, AuthorizeException
     {
@@ -675,26 +682,6 @@ public class OAIHarvester {
     		}
 
             item = ingestionWorkflow.postCreate(ourContext, wi, handle);
-
-            /*
-    		try {
-    			item = InstallItem.installItem(ourContext, wi, handle);
-    			//item = InstallItem.installItem(ourContext, wi);
-    		}
-    		// clean up the workspace item if something goes wrong before
-    		catch(SQLException se) {
-    			wi.deleteWrapper();
-    			throw se;
-    		}
-    		catch(IOException ioe) {
-    			wi.deleteWrapper();
-    			throw ioe;
-    		}
-    		catch(AuthorizeException ae) {
-    			wi.deleteWrapper();
-    			throw ae;
-    		}
-    		*/
     	}
 
     	// Now create the special ORE bundle and drop the ORE document in it
