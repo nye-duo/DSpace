@@ -1790,6 +1790,10 @@
 	<message key="xmlui.administrative.collection.SetupCollectionHarvestingForm.option_md_and_ref">Harvest metadata and references to bitstreams (requires ORE support).</message>
 	<message key="xmlui.administrative.collection.SetupCollectionHarvestingForm.option_md_and_bs">Harvest metadata and bitstreams (requires ORE support).</message>
 	<message key="xmlui.administrative.collection.SetupCollectionHarvestingForm.submit_test">Test Settings</message>
+    <message key="xmlui.administrative.collection.SetupCollectionHarvestingForm.label_ingest_filter">Ingest Filter</message>
+    <message key="xmlui.administrative.collection.SetupCollectionHarvestingForm.label_metadata_update">Metadata Removal Strategy</message>
+    <message key="xmlui.administrative.collection.SetupCollectionHarvestingForm.label_bundle_versioning">Bundle Versioning Strategy</message>
+    <message key="xmlui.administrative.collection.SetupCollectionHarvestingForm.label_ingest_workflow">Ingest Workflow</message>
 
 	<!-- org.dspace.app.xmlui.administrative.collection.EditCollectionHarvestingForm.java -->
 	<message key="xmlui.administrative.collection.EditCollectionHarvestingForm.main_settings_head">Harvested Collection Location</message>
@@ -1811,6 +1815,10 @@
 	<message key="xmlui.administrative.collection.EditCollectionHarvestingForm.submit_change_settings">Change Settings</message>
 	<message key="xmlui.administrative.collection.EditCollectionHarvestingForm.submit_import_now">Import Now</message>
 	<message key="xmlui.administrative.collection.EditCollectionHarvestingForm.submit_reimport_collection">Reset and Reimport Collection</message>
+    <message key="xmlui.administrative.collection.EditCollectionHarvestingForm.label_ingest_filter">Ingest Filter</message>
+    <message key="xmlui.administrative.collection.EditCollectionHarvestingForm.label_metadata_update">Metadata Removal Strategy</message>
+    <message key="xmlui.administrative.collection.EditCollectionHarvestingForm.label_bundle_versioning">Bundle Versioning Strategy</message>
+    <message key="xmlui.administrative.collection.EditCollectionHarvestingForm.label_ingest_workflow">Ingest Workflow</message>
 
 	<message key="xmlui.administrative.ControlPanel.option_harvest">Harvesting</message>
 	<message key="xmlui.administrative.ControlPanel.harvest_scheduler_head">Harvest Scheduler Controls</message>

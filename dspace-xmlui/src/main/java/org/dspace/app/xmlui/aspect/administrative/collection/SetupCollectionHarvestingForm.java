@@ -10,6 +10,7 @@ package org.dspace.app.xmlui.aspect.administrative.collection;
 import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.cocoon.environment.ObjectModelHelper;
 import org.apache.cocoon.environment.Request;
@@ -72,7 +73,11 @@ public class SetupCollectionHarvestingForm extends AbstractDSpaceTransformer
 
 	private static final Message T_submit_test = message("xmlui.administrative.collection.SetupCollectionHarvestingForm.submit_test"); 
 
-	
+	private static final Message T_label_ingest_filter = message("xmlui.administrative.collection.SetupCollectionHarvestingForm.label_ingest_filter");
+    private static final Message T_label_metadata_update = message("xmlui.administrative.collection.SetupCollectionHarvestingForm.label_metadata_update");
+    private static final Message T_label_bundle_versioning = message("xmlui.administrative.collection.SetupCollectionHarvestingForm.label_bundle_versioning");
+    private static final Message T_label_ingest_workflow = message("xmlui.administrative.collection.SetupCollectionHarvestingForm.label_ingest_workflow");
+
 		
 	
 	public void addPageMeta(PageMeta pageMeta) throws WingException
@@ -115,12 +120,20 @@ public class SetupCollectionHarvestingForm extends AbstractDSpaceTransformer
 		String oaiSetIdValue;
 		String metadataFormatValue;
 		int harvestLevelValue;
-				
+        String metadataUpdateValue;
+        String bundleVersioningValue;
+        String ingestWorkflowValue;
+        String ingestFilterValue;
+
 		if (hc != null && request.getParameter("submit_test") == null) {
 			oaiProviderValue = hc.getOaiSource();
 			oaiSetIdValue = hc.getOaiSetId();
 			metadataFormatValue = hc.getHarvestMetadataConfig();
 			harvestLevelValue = hc.getHarvestType();			
+            metadataUpdateValue = hc.getMetadataAuthorityType();
+            bundleVersioningValue = hc.getBundleVersioningStrategy();
+            ingestWorkflowValue = hc.getWorkflowProcess();
+            ingestFilterValue = hc.getIngestFilter();
 		}
 		else {
 			oaiProviderValue = parameters.getParameter("oaiProviderValue", "");
@@ -139,6 +152,12 @@ public class SetupCollectionHarvestingForm extends AbstractDSpaceTransformer
             {
                 harvestLevelValue = Integer.parseInt(harvestLevelString);
             }
+
+            // default values for the varions ingest process options
+            metadataUpdateValue = "all";
+            bundleVersioningValue = "all";
+            ingestWorkflowValue = "archive";
+            ingestFilterValue = "none";
 		}
 		
 		// DIVISION: main
@@ -249,6 +268,42 @@ public class SetupCollectionHarvestingForm extends AbstractDSpaceTransformer
 	    harvestLevel.addOption(harvestLevelValue == 2, 2, T_option_md_and_ref);
 	    harvestLevel.addOption(harvestLevelValue != 1 && harvestLevelValue != 2, 3, T_option_md_and_bs);
 	    
+        // Add a metadata removal configuration option
+        harvestOptions.addLabel(T_label_ingest_filter);
+        Select ingestFilter = harvestOptions.addItem().addSelect("ingest_filter");
+        Map<String, String> ingestOptions = this.getOptions("ingest_filter");
+        for (String key : ingestOptions.keySet())
+        {
+            ingestFilter.addOption(key.equals(ingestFilterValue), key, ingestOptions.get(key));
+        }
+
+        // Add a metadata removal configuration option
+        harvestOptions.addLabel(T_label_metadata_update);
+        Select metadataRemoval = harvestOptions.addItem().addSelect("metadata_update");
+        Map<String, String> metadataOptions = this.getOptions("metadata_update");
+        for (String key : metadataOptions.keySet())
+        {
+            metadataRemoval.addOption(key.equals(metadataUpdateValue), key, metadataOptions.get(key));
+        }
+
+        // Add a bundle versioning strategy option
+        harvestOptions.addLabel(T_label_bundle_versioning);
+        Select bundleVersioning = harvestOptions.addItem().addSelect("bundle_versioning");
+        Map<String, String> bundleOptions = this.getOptions("bundle_versioning");
+        for (String key : bundleOptions.keySet())
+        {
+            bundleVersioning.addOption(key.equals(bundleVersioningValue), key, bundleOptions.get(key));
+        }
+
+        // Add an ingest workflow setup option
+        harvestOptions.addLabel(T_label_ingest_workflow);
+        Select ingestWorkflow = harvestOptions.addItem().addSelect("ingest_workflow");
+        Map<String, String> workflowOptions = this.getOptions("ingest_workflow");
+        for (String key : workflowOptions.keySet())
+        {
+            ingestWorkflow.addOption(key.equals(ingestWorkflowValue), key, workflowOptions.get(key));
+        }
+
 		Para buttonList = main.addPara();
 	    buttonList.addButton("submit_save").setValue(T_submit_save);
 	    buttonList.addButton("submit_return").setValue(T_submit_return);
@@ -256,4 +311,20 @@ public class SetupCollectionHarvestingForm extends AbstractDSpaceTransformer
     	main.addHidden("administrative-continue").setValue(knot.getId());
     }
 	
+    private Map<String, String> getOptions(String plugin)
+    {
+        Map<String, String> options = new HashMap<String, String>();
+        String cfg = ConfigurationManager.getProperty("oai", "harvester." + plugin + ".options");
+        String[] bits = cfg.split(",");
+        for (String bit : bits)
+        {
+            String[] parts = bit.split("\\:");
+            if (parts.length != 2)
+            {
+                continue;
+            }
+            options.put(parts[0].trim(), parts[1].trim());
+        }
+        return options;
+    }
 }
