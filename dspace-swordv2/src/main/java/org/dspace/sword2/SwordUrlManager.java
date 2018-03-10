@@ -443,7 +443,9 @@ public class SwordUrlManager
 			}
 			else
 			{
+                // NOTE: retrieve link doesn't appear to work, but looking at the XMLUI, the bitstream/id url works
 				bsLink = bsLink + "/retrieve/" + bitstream.getID() + "/" + bitstream.getName();
+                // bsLink = bsLink + "/bitstream/id/" + bitstream.getID() + "/" + bitstream.getName();
 			}
 
 			return bsLink;

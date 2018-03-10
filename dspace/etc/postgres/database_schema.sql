@@ -784,7 +784,11 @@ CREATE TABLE harvested_collection
     harvest_status INTEGER,
     harvest_start_time TIMESTAMP WITH TIME ZONE,
     last_harvested TIMESTAMP WITH TIME ZONE,
-    id INTEGER PRIMARY KEY
+    id INTEGER PRIMARY KEY,
+    metadata_authority_type VARCHAR,
+    bundle_versioning_strategy VARCHAR,
+    workflow_process VARCHAR,
+    ingest_filter VARCHAR
 );
 
 CREATE INDEX harvested_collection_fk_idx ON harvested_collection(collection_id);

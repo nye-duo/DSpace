@@ -34,6 +34,7 @@ import org.dspace.content.Item;
 import org.dspace.content.ItemIterator;
 import org.dspace.content.SupervisedItem;
 import org.dspace.content.WorkspaceItem;
+import org.dspace.core.ConfigurationManager;
 import org.dspace.core.Constants;
 import org.dspace.eperson.EPerson;
 import org.xml.sax.SAXException;
@@ -208,10 +209,13 @@ public class Submissions extends AbstractDSpaceTransformer
 
     	Table table = unfinished.addTable("unfinished-submissions",rows,5);
         Row header = table.addRow(Row.ROLE_HEADER);
+        header.addCellContent(" ");
         header.addCellContent(T_s_column1);
         header.addCellContent(T_s_column2);
         header.addCellContent(T_s_column3);
-        header.addCellContent(T_s_column4);
+        // header.addCellContent(T_s_column4);
+        header.addCellContent("Author(s)");
+        header.addCellContent("Unit code");
 
         if (supervisedItems.length > 0 && unfinishedItems.length > 0)
         {
@@ -221,7 +225,8 @@ public class Submissions extends AbstractDSpaceTransformer
 
         if (unfinishedItems.length > 0)
         {
-            for (WorkspaceItem workspaceItem : unfinishedItems) 
+            int i = 1;
+            for (WorkspaceItem workspaceItem : unfinishedItems)
             {
                 DCValue[] titles = workspaceItem.getItem().getDC("title", null, Item.ANY);
                 EPerson submitterEPerson = workspaceItem.getItem().getSubmitter();
@@ -232,7 +237,39 @@ public class Submissions extends AbstractDSpaceTransformer
                 String submitterEmail = submitterEPerson.getEmail();
                 String collectionName = workspaceItem.getCollection().getMetadata("name");
 
+                // get the unit code
+                String cfg = ConfigurationManager.getProperty("cristin", "unitcode.field");
+                String unitcodes = "";
+                if (cfg != null)
+                {
+                    DCValue[] unitcodeDC = workspaceItem.getItem().getMetadata(cfg);
+                    if (unitcodeDC.length > 0)
+                    {
+                        for (DCValue uc : unitcodeDC)
+                        {
+                            if (!"".equals(unitcodes)) { unitcodes += ", "; }
+                            unitcodes += uc.value;
+                        }
+                    }
+                }
+
+                // get the authors
+                String authors = "";
+                DCValue[] authorDC = workspaceItem.getItem().getMetadata("dc.creator.author");
+                if (authorDC.length > 0)
+                {
+                    for (DCValue au : authorDC)
+                    {
+                        if (!"".equals(authors)) { authors += ", "; }
+                        authors += au.value;
+                    }
+                }
+
                 Row row = table.addRow(Row.ROLE_DATA);
+
+                // add a row number
+                row.addCell().addContent(i++);
+
                 CheckBox remove = row.addCell().addCheckBox("workspaceID");
                 remove.setLabel("remove");
                 remove.addOption(workspaceItemID);
@@ -247,9 +284,14 @@ public class Submissions extends AbstractDSpaceTransformer
                 else
                     row.addCell().addXref(url,T_untitled);
                 row.addCell().addXref(url,collectionName);
+
+                /*
                 Cell cell = row.addCell();
                 cell.addContent(T_email);
                 cell.addXref("mailto:"+submitterEmail,submitterName);
+                */
+                row.addCell().addContent(authors);
+                row.addCell().addContent(unitcodes);
             }
         } 
         else
@@ -364,9 +406,12 @@ public class Submissions extends AbstractDSpaceTransformer
         // Create table, headers
         Table table = completedSubmissions.addTable("completed-submissions",subList.size() + 2,3);
         Row header = table.addRow(Row.ROLE_HEADER);
+        header.addCellContent(" "); // number column
         header.addCellContent(T_c_column1); // ISSUE DATE
         header.addCellContent(T_c_column2); // ITEM TITLE (LINKED)
         header.addCellContent(T_c_column3); // COLLECTION NAME (LINKED)
+        header.addCellContent("Author(s)");
+        header.addCellContent("Unit code");
 
         //Limit to showing just 50 archived submissions, unless overridden
         //(This is a saftey measure for Admins who may have submitted 
@@ -390,7 +435,38 @@ public class Submissions extends AbstractDSpaceTransformer
             String collectionName = published.getOwningCollection().getMetadata("name");
             DCValue[] ingestDate = published.getMetadata("dc", "date", "accessioned", Item.ANY);
 
+            // get the unit code
+            String cfg = ConfigurationManager.getProperty("cristin", "unitcode.field");
+            String unitcodes = "";
+            if (cfg != null)
+            {
+                DCValue[] unitcodeDC = published.getMetadata(cfg);
+                if (unitcodeDC.length > 0)
+                {
+                    for (DCValue uc : unitcodeDC)
+                    {
+                        if (!"".equals(unitcodes)) { unitcodes += ", "; }
+                        unitcodes += uc.value;
+                    }
+                }
+            }
+
+            // get the authors
+            String authors = "";
+            DCValue[] authorDC = published.getMetadata("dc.creator.author");
+            if (authorDC.length > 0)
+            {
+                for (DCValue au : authorDC)
+                {
+                    if (!"".equals(authors)) { authors += ", "; }
+                    authors += au.value;
+                }
+            }
+
             Row row = table.addRow();
+
+            // add a row number
+            row.addCell().addContent(count);
 
             // Item accession date
             if (ingestDate != null && ingestDate.length > 0 &&
@@ -417,6 +493,9 @@ public class Submissions extends AbstractDSpaceTransformer
 
             // Owning Collection
             row.addCell().addXref(collUrl,collectionName);
+
+            row.addCell().addContent(authors);
+            row.addCell().addContent(unitcodes);
         }//end while
 
         //Display limit text & link to allow user to override this default limit

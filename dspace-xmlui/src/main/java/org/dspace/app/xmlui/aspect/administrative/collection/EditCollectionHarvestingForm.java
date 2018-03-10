@@ -8,6 +8,9 @@
 package org.dspace.app.xmlui.aspect.administrative.collection;
 
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.dspace.app.xmlui.cocoon.AbstractDSpaceTransformer;
 import org.dspace.app.xmlui.wing.Message;
 import org.dspace.app.xmlui.wing.WingException;
@@ -76,6 +79,10 @@ public class EditCollectionHarvestingForm extends AbstractDSpaceTransformer
 	private static final Message T_submit_import_now = message("xmlui.administrative.collection.EditCollectionHarvestingForm.submit_import_now");
 	private static final Message T_submit_reimport_collection = message("xmlui.administrative.collection.EditCollectionHarvestingForm.submit_reimport_collection");
 	
+    private static final Message T_label_ingest_filter = message("xmlui.administrative.collection.EditCollectionHarvestingForm.label_ingest_filter");
+    private static final Message T_label_metadata_update = message("xmlui.administrative.collection.EditCollectionHarvestingForm.label_metadata_update");
+    private static final Message T_label_bundle_versioning = message("xmlui.administrative.collection.EditCollectionHarvestingForm.label_bundle_versioning");
+    private static final Message T_label_ingest_workflow = message("xmlui.administrative.collection.EditCollectionHarvestingForm.label_ingest_workflow");
 
 	public void addPageMeta(PageMeta pageMeta) throws WingException
     {
@@ -99,7 +106,11 @@ public class EditCollectionHarvestingForm extends AbstractDSpaceTransformer
 		String metadataFormatValue = hc.getHarvestMetadataConfig();
 		int harvestLevelValue = hc.getHarvestType();
 		int harvestStatusValue = hc.getHarvestStatus();
-					    
+        String metadataUpdateValue = hc.getMetadataAuthorityType();
+        String bundleVersioningValue = hc.getBundleVersioningStrategy();
+        String ingestWorkflowValue = hc.getWorkflowProcess();
+        String ingestFilterValue = hc.getIngestFilter();
+
 		// DIVISION: main
 	    Division main = body.addInteractiveDivision("collection-harvesting-edit",contextPath+"/admin/collection",Division.METHOD_MULTIPART,"primary administrative collection");
 	    main.setHead(T_main_head.parameterize(thisCollection.getMetadata("name")));   
@@ -154,6 +165,22 @@ public class EditCollectionHarvestingForm extends AbstractDSpaceTransformer
     		default: harvestLevel.addContent(T_option_md_and_bs); break;
     	}
 	        	    	
+        // Add an ingest filter
+        settings.addLabel(T_label_ingest_filter);
+        settings.addItem().addContent(this.getDisplayValue("ingest_filter", ingestFilterValue));
+
+        // Add a metadata removal configuration option
+        settings.addLabel(T_label_metadata_update);
+        settings.addItem().addContent(this.getDisplayValue("metadata_update", metadataUpdateValue));
+
+        // Add a bundle versioning strategy option
+        settings.addLabel(T_label_bundle_versioning);
+        settings.addItem().addContent(this.getDisplayValue("bundle_versioning", bundleVersioningValue));
+
+        // Add an ingest workflow setup option
+        settings.addLabel(T_label_ingest_workflow);
+        settings.addItem().addContent(this.getDisplayValue("ingest_workflow", ingestWorkflowValue));
+
         /* Results of the last harvesting cycle */
         if (harvestLevelValue > 0) {
         	settings.addLabel(T_label_harvest_result);
@@ -190,4 +217,30 @@ public class EditCollectionHarvestingForm extends AbstractDSpaceTransformer
     	main.addHidden("administrative-continue").setValue(knot.getId());
     }
 	
+    private String getDisplayValue(String plugin, String key)
+    {
+        Map<String, String> options = this.getOptions(plugin);
+        if (options.containsKey(key))
+        {
+            return options.get(key);
+        }
+        return "";
+    }
+
+    private Map<String, String> getOptions(String plugin)
+    {
+        Map<String, String> options = new HashMap<String, String>();
+        String cfg = ConfigurationManager.getProperty("oai", "harvester." + plugin + ".options");
+        String[] bits = cfg.split(",");
+        for (String bit : bits)
+        {
+            String[] parts = bit.split("\\:");
+            if (parts.length != 2)
+            {
+                continue;
+            }
+            options.put(parts[0].trim(), parts[1].trim());
+        }
+        return options;
+    }
 }
