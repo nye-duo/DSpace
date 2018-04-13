@@ -15,6 +15,8 @@ import org.dspace.harvest.HarvestedItem;
 import org.dspace.harvest.dao.HarvestedItemDAO;
 import org.dspace.storage.rdbms.DatabaseUtils;
 import org.hibernate.Criteria;
+import org.hibernate.Query;
+import org.hibernate.SQLQuery;
 import org.hibernate.criterion.Restrictions;
 
 import java.sql.SQLException;
@@ -44,8 +46,8 @@ public class HarvestedItemDAOImpl extends AbstractHibernateDAO<HarvestedItem> im
 
     @Override
     public HarvestedItem findByOAIId(Context context, String itemOaiID, Collection collection) throws SQLException {
-        List<Criteria> lookups = new ArrayList<Criteria>();
 
+        // first look the item up in the usual way, looking for it in the archive
         Criteria simpleItem = createCriteria(context, HarvestedItem.class);
         simpleItem.createAlias("item", "i");
         simpleItem.add(
@@ -54,68 +56,49 @@ public class HarvestedItemDAOImpl extends AbstractHibernateDAO<HarvestedItem> im
                         Restrictions.eq("i.owningCollection", collection)
                 )
         );
-        lookups.add(simpleItem);
-
-
-        Criteria workflowItem = createCriteria(context, HarvestedItem.class);
-        workflowItem.createAlias("wf", "workflowitem");
-        workflowItem.createAlias("c", "collection");
-        workflowItem.add(
-                Restrictions.eqProperty("wf.item_id", "item_id")
-        );
-        workflowItem.add(
-                Restrictions.eqProperty("wf.collection_id", "c.collection_id")
-        );
-        workflowItem.add(
-                Restrictions.and(
-                        Restrictions.eq("oaiId", itemOaiID),
-                        Restrictions.eq("c.collection_id", collection)
-                )
-        );
-        lookups.add(workflowItem);
-
-        Criteria workspaceItem = createCriteria(context, HarvestedItem.class);
-        workspaceItem.createAlias("ws", "workspaceitem");
-        workspaceItem.createAlias("c", "collection");
-        workspaceItem.add(
-                Restrictions.eqProperty("ws.item_id", "item_id")
-        );
-        workspaceItem.add(
-                Restrictions.eqProperty("ws.collection_id", "c.collection_id")
-        );
-        workflowItem.add(
-                Restrictions.and(
-                        Restrictions.eq("oaiId", itemOaiID),
-                        Restrictions.eq("c.collection_id", collection)
-                )
-        );
-        lookups.add(workspaceItem);
-
-        // TODO: does this work if the configurable workflow is not activated?
-        Criteria cwfItem = createCriteria(context, HarvestedItem.class);
-        cwfItem.createAlias("cwf", "cwf_workflowitem");
-        cwfItem.createAlias("c", "collection");
-        cwfItem.add(
-                Restrictions.eqProperty("cwf.item_id", "item_id")
-        );
-        cwfItem.add(
-                Restrictions.eqProperty("cwf.collection_id", "c.collection_id")
-        );
-        cwfItem.add(
-                Restrictions.and(
-                        Restrictions.eq("oaiId", itemOaiID),
-                        Restrictions.eq("c.collection_id", collection)
-                )
-        );
-        lookups.add(cwfItem);
-
-        for (Criteria criteria : lookups)
+        HarvestedItem result = singleResult(simpleItem);
+        if (result != null)
         {
-            HarvestedItem result = singleResult(criteria);
-            if (result != null)
-            {
-                return result;
-            }
+            return result;
+        }
+
+        // items that aren't in the archive will not have owning collections, so we need to look for them elsewhere.
+        // try a bunch of locations until we locate the item
+
+        // In the regular workflow
+        String q1 = String.format("select hi from HarvestedItem as hi, org.dspace.workflowbasic.BasicWorkflowItem as wf " +
+                "where hi.item = wf.item and wf.collection = '%s' and hi.oaiId = '%s'",
+                collection.getID().toString(),
+                itemOaiID);
+        Query workflowQuery = this.createQuery(context, q1);
+        result = singleResult(workflowQuery);
+        if (result != null)
+        {
+            return result;
+        }
+
+        // in the workspace
+        String q2 = String.format("select hi from HarvestedItem as hi, org.dspace.content.WorkspaceItem as ws " +
+                        "where hi.item = ws.item and ws.collection = '%s' and hi.oaiId = '%s'",
+                collection.getID().toString(),
+                itemOaiID);
+        Query workspaceQuery = this.createQuery(context, q2);
+        result = singleResult(workspaceQuery);
+        if (result != null)
+        {
+            return result;
+        }
+
+        // in the configurable workflow
+        String q3 = String.format("select hi from HarvestedItem as hi, org.dspace.xmlworkflow.storedcomponents.XmlWorkflowItem as cwf " +
+                        "where hi.item = cwf.item and cwf.collection = '%s' and hi.oaiId = '%s'",
+                collection.getID().toString(),
+                itemOaiID);
+        Query cwfWorkflowQuery = this.createQuery(context, q3);
+        result = singleResult(cwfWorkflowQuery);
+        if (result != null)
+        {
+            return result;
         }
 
         return null;

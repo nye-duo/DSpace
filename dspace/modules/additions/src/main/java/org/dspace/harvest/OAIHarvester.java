@@ -30,7 +30,6 @@ import org.dspace.harvest.service.HarvestedCollectionService;
 import org.dspace.harvest.service.HarvestedItemService;
 import org.dspace.services.ConfigurationService;
 import org.dspace.services.factory.DSpaceServicesFactory;
-import org.dspace.utils.DSpace;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.Namespace;
@@ -533,7 +532,7 @@ public class OAIHarvester
 		{
 			ingestFilter = (IngestFilter) pluginService.getNamedPlugin(IngestFilter.class, filter);
 		}
-		else
+		if (ingestFilter == null)
 		{
 			ingestFilter = new DefaultIngestFilter();
 		}
@@ -554,7 +553,7 @@ public class OAIHarvester
 		}
 		if (ingestionWorkflow == null)
 		{
-			ingestionWorkflow = new DefaultIngestionWorkflow();
+			ingestionWorkflow = new DirectToArchiveIngestionWorkflow();
 		}
 
 		// FIXME: at some point in here we need to decide whether we are actually going to accept the item
@@ -581,7 +580,6 @@ public class OAIHarvester
 			// first, let's make sure that we're updating the right thing.  Allow the IngestionWorkflow
 			// to give us a new item if necessary, and update the HarvestedItem if it wants
 			item = ingestionWorkflow.preUpdate(ourContext, item, targetCollection, hi, descMD, oreREM);
-
 
 			// allow a plugin to clear the metadata if one is configured
 			String mdAuthority = harvestRow.getMetadataAuthorityType();

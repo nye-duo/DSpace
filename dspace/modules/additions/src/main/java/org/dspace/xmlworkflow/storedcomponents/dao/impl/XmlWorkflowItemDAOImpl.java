@@ -41,14 +41,15 @@ public class XmlWorkflowItemDAOImpl extends AbstractHibernateDAO<XmlWorkflowItem
         Criteria criteria = createCriteria(context, XmlWorkflowItem.class);
         criteria.createAlias("item", "i");
         criteria.add(
-                Restrictions.eqProperty("i.item_id", "item_id")
+                Restrictions.eqProperty("i.id", "item")
         );
         if(collection != null)
         {
             criteria.add(Restrictions.eq("collection", collection));
         }
 
-        criteria.addOrder(Order.desc("i.last_modified"));
+        // order with most recently modified first
+        criteria.addOrder(Order.desc("i.lastModified"));
 
         if(offset != null)
         {

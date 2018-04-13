@@ -309,13 +309,13 @@ public class Submissions extends AbstractDSpaceTransformer
         else
         {
             header = table.addRow();
-            header.addCell(0,5).addHighlight("italic").addContent(T_s_info3);
+            header.addCell(0,6).addHighlight("italic").addContent(T_s_info3);
         }
 
         if (supervisedItems.size() > 0)
         {
             header = table.addRow();
-            header.addCell(null,Cell.ROLE_HEADER,0,5,null).addContent(T_s_head4);
+            header.addCell(null,Cell.ROLE_HEADER,0,6,null).addContent(T_s_head4);
         }
 
         for (WorkspaceItem workspaceItem : supervisedItems) 
@@ -354,7 +354,7 @@ public class Submissions extends AbstractDSpaceTransformer
         }
 
         header = table.addRow();
-        Cell lastCell = header.addCell(0,5);
+        Cell lastCell = header.addCell(0,6);
         if (unfinishedItems.size() > 0 || supervisedItems.size() > 0)
         {
             lastCell.addButton("submit_submissions_remove").setValue(T_s_submit_remove);
