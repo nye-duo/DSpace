@@ -2,7 +2,6 @@ package org.dspace.harvest;
 
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.Collection;
-// import org.dspace.content.InstallItem;
 import org.dspace.content.Item;
 import org.dspace.content.WorkspaceItem;
 import org.dspace.content.service.InstallItemService;
@@ -15,7 +14,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-public class DefaultIngestionWorkflow implements IngestionWorkflow
+public class DirectToArchiveIngestionWorkflow implements IngestionWorkflow
 {
     @Autowired(required = true)
     protected InstallItemService installItemService;

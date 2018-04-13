@@ -401,14 +401,14 @@ public class Submissions extends AbstractDSpaceTransformer
 
         	if(showReturnToPoolButton){
                 Row row = table.addRow();
-                row.addCell(0,5).addButton("submit_return_tasks").setValue(T_w_submit_return);
+                row.addCell(0,7).addButton("submit_return_tasks").setValue(T_w_submit_return);
             }
 
         }
         else
         {
         	Row row = table.addRow();
-        	row.addCell(0,5).addHighlight("italic").addContent(T_w_info2);
+        	row.addCell(0,7).addHighlight("italic").addContent(T_w_info2);
         }
 
 
@@ -541,12 +541,12 @@ public class Submissions extends AbstractDSpaceTransformer
                 }
             }
         	Row row = table.addRow();
-	    	row.addCell(0,5).addButton("submit_take_tasks").setValue(T_w_submit_take);
+	    	row.addCell(0,7).addButton("submit_take_tasks").setValue(T_w_submit_take);
         }
         else
         {
         	Row row = table.addRow();
-        	row.addCell(0,4).addHighlight("italic").addContent(T_w_info3);
+        	row.addCell(0,7).addHighlight("italic").addContent(T_w_info3);
         }
     }
 
