@@ -459,7 +459,8 @@ public class OAIHarvester
 		// If we got to this point, it means the harvest was completely successful
 		Date finishTime = new Date();
 		long timeTaken = finishTime.getTime() - startTime.getTime();
-		harvestRow.setHarvestStartTime(startTime);
+		// harvestRow.setHarvestStartTime(startTime);
+		harvestRow.setLastHarvested(startTime);
 		harvestRow.setHarvestMessage("Harvest from " + oaiSource + " successful");
 		harvestRow.setHarvestStatus(HarvestedCollection.STATUS_READY);
 		log.info("Harvest from " + oaiSource + " successful. The process took " + timeTaken + " milliseconds. Harvested " + currentRecord + " items.");
@@ -748,11 +749,11 @@ public class OAIHarvester
 		//item.setHarvestDate(new Date());
 		hi.setHarvestDate(new Date());
 
-                 // Add provenance that this item was harvested via OAI
-                String provenanceMsg = "Item created via OAI harvest from source: "
-                                        + this.harvestRow.getOaiSource() + " on " +  new DCDate(hi.getHarvestDate())
-                                        + " (GMT).  Item's OAI Record identifier: " + hi.getOaiID();
-				itemService.addMetadata(ourContext, item, "dc", "description", "provenance", "en", provenanceMsg);
+		// Add provenance that this item was harvested via OAI
+		String provenanceMsg = "Item created via OAI harvest from source: "
+								+ this.harvestRow.getOaiSource() + " on " +  new DCDate(hi.getHarvestDate())
+								+ " (GMT).  Item's OAI Record identifier: " + hi.getOaiID();
+		itemService.addMetadata(ourContext, item, "dc", "description", "provenance", "en", provenanceMsg);
 
 		itemService.update(ourContext, item);
 		harvestedItemService.update(ourContext, hi);
