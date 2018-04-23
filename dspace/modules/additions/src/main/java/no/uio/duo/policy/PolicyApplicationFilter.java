@@ -3,13 +3,17 @@ package no.uio.duo.policy;
 import org.dspace.content.Community;
 import org.dspace.content.DSpaceObject;
 import org.dspace.content.Item;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.ItemService;
 import org.dspace.core.ConfigurationManager;
 import org.dspace.core.Context;
-import org.dspace.handle.HandleManager;
+import org.dspace.handle.factory.HandleServiceFactory;
+import org.dspace.handle.service.HandleService;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class PolicyApplicationFilter
 {
@@ -36,19 +40,22 @@ public class PolicyApplicationFilter
             return true;
         }
 
-        List<Integer> communityIDs = new ArrayList<Integer>();
+        HandleService handleService = HandleServiceFactory.getInstance().getHandleService();
+
+        List<UUID> communityIDs = new ArrayList<UUID>();
         String[] handles = scopeCfg.split(",");
         for (String handle : handles)
         {
             handle = handle.trim();
-            DSpaceObject dso = HandleManager.resolveToObject(context, handle);
+            DSpaceObject dso = handleService.resolveToObject(context, handle);
             if (dso instanceof Community)
             {
                 communityIDs.add(dso.getID());
             }
         }
 
-        Community[] coms = item.getCommunities();
+        ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+        List<Community> coms = itemService.getCommunities(context, item);
         for (Community com : coms)
         {
             if (communityIDs.contains(com.getID()))

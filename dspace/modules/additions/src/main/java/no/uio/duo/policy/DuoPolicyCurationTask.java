@@ -36,15 +36,7 @@ public class DuoPolicyCurationTask extends AbstractCurationTask
         Item item = (Item) dso;
 
         // we haven't been given a context, so make our own one
-        Context context;
-        try
-        {
-            context = new Context();
-        }
-        catch (SQLException e)
-        {
-            return Curator.CURATE_ERROR;
-        }
+        Context context = new Context();
 
         boolean error = false;
         try

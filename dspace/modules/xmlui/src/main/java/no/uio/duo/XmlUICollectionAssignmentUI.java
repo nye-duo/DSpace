@@ -18,6 +18,8 @@ import org.dspace.content.Collection;
 import org.dspace.content.Community;
 import org.dspace.content.DSpaceObject;
 import org.dspace.content.Item;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.CommunityService;
 import org.dspace.core.Constants;
 import org.xml.sax.SAXException;
 
@@ -25,6 +27,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Stack;
+import java.util.UUID;
 
 /**
  * <p>XMLUI Action to provide a Collection assignment workflow stage</p>
@@ -63,14 +66,14 @@ public class XmlUICollectionAssignmentUI extends AbstractXMLUIAction
         div.addPara("The item is being submitted to the collection:" + collection.getName() + " (" + collection.getHandle() + ")");
         div.addPara("Select collections to add the item to:");
 
-        TreeNode root = buildTree(Community.findAllTop(context));
-        Collection[] existingCollections = item.getCollections();
-        java.util.List<Integer> existingIDs = new ArrayList<Integer>();
+        CommunityService communityService = ContentServiceFactory.getInstance().getCommunityService();
+        TreeNode root = buildTree(communityService.findAllTop(context));
+        java.util.List<Collection> existingCollections = item.getCollections();
+        java.util.List<UUID> existingIDs = new ArrayList<UUID>();
         for (Collection ec : existingCollections)
         {
             existingIDs.add(ec.getID());
         }
-
 
         java.util.List<TreeNode> rootNodes = root.getChildrenOfType(Constants.COMMUNITY);
 
@@ -102,7 +105,7 @@ public class XmlUICollectionAssignmentUI extends AbstractXMLUIAction
         div.addHidden("submission-continue").setValue(knot.getId());
     }
 
-    public void buildList(Table table, TreeNode node, Collection submissionCollection, java.util.List<Integer> existingIDs) throws WingException
+    public void buildList(Table table, TreeNode node, Collection submissionCollection, java.util.List<UUID> existingIDs) throws WingException
     {
         DSpaceObject dso = node.getDSO();
 
@@ -116,13 +119,13 @@ public class XmlUICollectionAssignmentUI extends AbstractXMLUIAction
         {
             for (TreeNode collectionNode : collectionNodes)
             {
-                int nodeID = collectionNode.getDSO().getID();
+                UUID nodeID = collectionNode.getDSO().getID();
                 tr = table.addRow();
                 tr.addCell().addContent(this.getIndent(collectionNode) + collectionNode.getDSO().getName());
                 if (nodeID != submissionCollection.getID())
                 {
-                    CheckBox cb = tr.addCell().addCheckBox("mapped_collection_" + Integer.toString(nodeID));
-                    cb.addOption(existingIDs.contains(nodeID), Integer.toString(nodeID));
+                    CheckBox cb = tr.addCell().addCheckBox("mapped_collection_" + nodeID.toString());
+                    cb.addOption(existingIDs.contains(nodeID), nodeID.toString());
                 }
             }
         }
@@ -186,7 +189,7 @@ public class XmlUICollectionAssignmentUI extends AbstractXMLUIAction
      * @param communities The root level communities
      * @return A root level node.
      */
-    private TreeNode buildTree(Community[] communities) throws SQLException
+    private TreeNode buildTree(java.util.List<Community> communities) throws SQLException
     {
         int maxDepth = 10;
 
@@ -322,29 +325,32 @@ public class XmlUICollectionAssignmentUI extends AbstractXMLUIAction
             throws SQLException, WingException
     {
         // get the communities and collections to be listed
-        Community[] communities = this.listCommunities(parent);
+        java.util.List<Community> communities = this.listCommunities(parent);
         Collection[] collection = null;
         if (parent != null)
         {
-            Collection[] collections = parent.getCollections();
+            java.util.List<Collection> collections = parent.getCollections();
         }
 
         List comColList = null;
-        if (communities.length > 0 || (collection != null && collection.length > 0))
+        if (communities.size() > 0 || (collection != null && collection.length > 0))
         {
             comColList = div.addList("comcol" + Integer.toString(depth) + "-" + "");
         }
-        for (Community com : communities)
+        if (comColList != null)
         {
-            org.dspace.app.xmlui.wing.element.Item listItem = comColList.addItem();
-            listItem.addText(com.getName() + " (" + com.getHandle() + ")");
-            comColList.addItem();
+            for (Community com : communities)
+            {
+                org.dspace.app.xmlui.wing.element.Item listItem = comColList.addItem();
+                listItem.addText(com.getName() + " (" + com.getHandle() + ")");
+                comColList.addItem();
+            }
         }
 
         if (parent != null)
         {
-            Collection[] collections = parent.getCollections();
-            if (collections.length > 0 && comColList == null)
+            java.util.List<Collection> collections = parent.getCollections();
+            if (collections.size() > 0 && comColList == null)
             {
 
             }
@@ -357,12 +363,13 @@ public class XmlUICollectionAssignmentUI extends AbstractXMLUIAction
         // this.recurseComCol();
     }
 
-    private Community[] listCommunities(Community root)
+    private java.util.List<Community> listCommunities(Community root)
             throws SQLException
     {
         if (root == null)
         {
-            return Community.findAll(context);
+            CommunityService communityService = ContentServiceFactory.getInstance().getCommunityService();
+            return communityService.findAll(context);
         }
         return root.getSubcommunities();
     }

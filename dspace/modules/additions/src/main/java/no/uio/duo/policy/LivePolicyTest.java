@@ -2,6 +2,7 @@ package no.uio.duo.policy;
 
 import no.uio.duo.BitstreamIterator;
 // import no.uio.duo.DuoState;
+import no.uio.duo.MetadataFieldRepresentation;
 import no.uio.duo.MetadataManager;
 import no.uio.duo.WorkflowManagerWrapper;
 import no.uio.duo.livetest.LiveTest;
@@ -12,15 +13,22 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.dspace.authorize.AuthorizeManager;
 import org.dspace.authorize.ResourcePolicy;
+import org.dspace.authorize.factory.AuthorizeServiceFactory;
+import org.dspace.authorize.service.AuthorizeService;
+import org.dspace.authorize.service.ResourcePolicyService;
 import org.dspace.content.*;
-import org.dspace.content.Collection;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.BitstreamService;
+import org.dspace.content.service.ItemService;
+import org.dspace.content.service.WorkspaceItemService;
 import org.dspace.core.ConfigurationManager;
 import org.dspace.core.Constants;
 import org.dspace.core.Context;
-import org.dspace.eperson.EPerson;
 import org.dspace.eperson.Group;
+import org.dspace.eperson.factory.EPersonServiceFactory;
+import org.dspace.eperson.service.EPersonService;
+import org.dspace.eperson.service.GroupService;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -146,9 +154,10 @@ public class LivePolicyTest extends LiveTest
         this.testMatrix = csv.getRecords();
 
         this.context = new Context();
-        this.context.setIgnoreAuthorization(true);
+        this.context.turnOffAuthorisationSystem();
 
-        this.eperson = EPerson.findByEmail(this.context, epersonEmail);
+        EPersonService ePersonService = EPersonServiceFactory.getInstance().getEPersonService();
+        this.eperson = ePersonService.findByEmail(this.context, epersonEmail);
         this.context.setCurrentUser(this.eperson);
 
         this.collection = this.makeCollection();
@@ -279,7 +288,7 @@ public class LivePolicyTest extends LiveTest
         }
 
         // make a map from bitstream id to expected anonRead results
-        Map<Integer, String> readMap = new HashMap<Integer, String>();
+        Map<UUID, String> readMap = new HashMap<UUID, String>();
         for (int i = 0; i < actOn.bitstreamIDs.size(); i++)
         {
             readMap.put(actOn.bitstreamIDs.get(i), anonReadResults.get(i));
@@ -293,7 +302,7 @@ public class LivePolicyTest extends LiveTest
         this.testEnd(name);
     }
 
-    private void checkAndPrint(String testName, Item item, Map<Integer, String> anonReadResults, String metadataResult,
+    private void checkAndPrint(String testName, Item item, Map<UUID, String> anonReadResults, String metadataResult,
                                String stateInstalled,
                                String stateState,
                                String stateEmbargo,
@@ -347,16 +356,19 @@ public class LivePolicyTest extends LiveTest
         ItemMakeRecord result = new ItemMakeRecord();
 
         // make the item in the collection
-        WorkspaceItem wsi = WorkspaceItem.create(this.context, this.collection, false);
+        WorkspaceItemService workspaceItemService = ContentServiceFactory.getInstance().getWorkspaceItemService();
+        WorkspaceItem wsi = workspaceItemService.create(this.context, this.collection, false);
         Item item = wsi.getItem();
+
+        ItemService itemService = ContentServiceFactory.getInstance().getItemService();
 
         if ("archive".equals(state))
         {
             WorkflowManagerWrapper.startWithoutNotify(this.context, wsi);
-            item = Item.find(this.context, item.getID());
+            item = itemService.find(this.context, item.getID());
         }
 
-        item.addMetadata("dc", "title", null, null, "Item ID " + item.getID());
+        itemService.addMetadata(context, item, "dc", "title", null, null, "Item ID " + item.getID());
 
         // set the embargo date
         String ed = null;
@@ -395,8 +407,8 @@ public class LivePolicyTest extends LiveTest
         {
             String md = ConfigurationManager.getProperty("embargo.field.terms");
             MetadataManager mm = new MetadataManager();
-            DCValue dcv = mm.makeDCValue(md, null);
-            item.addMetadata(dcv.schema, dcv.element, dcv.qualifier, null, ed);
+            MetadataFieldRepresentation dcv = mm.makeDCValue(md, null);
+            itemService.addMetadata(context, item, dcv.schema, dcv.element, dcv.qualifier, null, ed);
         }
 
         // add some bitstreams to the item
@@ -415,21 +427,26 @@ public class LivePolicyTest extends LiveTest
         if (adminFile)
         {
             InputStream adminFileStream = new FileInputStream(this.bitstream);
-            Bitstream admin = item.createSingleBitstream(adminFileStream, "ADMIN");
-            admin.setName("adminfile.txt");
-            admin.update();
+            Bitstream admin = itemService.createSingleBitstream(context, adminFileStream, item, "ADMIN");
+            admin.setName(context, "adminfile.txt");
+            BitstreamService bitstreamService = ContentServiceFactory.getInstance().getBitstreamService();
+            bitstreamService.update(context, admin);
         }
 
         // clear out any existing resource policies
         this.clearResourcePolicies(item);
 
         // make the item itself anon read
-        ResourcePolicy irp = ResourcePolicy.create(this.context);
+        ResourcePolicyService resourcePolicyService = AuthorizeServiceFactory.getInstance().getResourcePolicyService();
+        GroupService groupService = EPersonServiceFactory.getInstance().getGroupService();
+        Group anon = groupService.findByName(context, Group.ANONYMOUS);
+        Group admin = groupService.findByName(context, Group.ADMIN);
+
+        ResourcePolicy irp = resourcePolicyService.create(this.context);
         irp.setAction(Constants.READ);
-        irp.setGroup(Group.find(context, 0));
-        irp.setResource(item);
-        irp.setResourceType(Constants.ITEM);
-        irp.update();
+        irp.setGroup(anon);
+        irp.setdSpaceObject(item);
+        resourcePolicyService.update(context, irp);
 
         for (int i = 0; i < originals.size(); i++)
         {
@@ -438,12 +455,11 @@ public class LivePolicyTest extends LiveTest
 
             if (adminRead)
             {
-                ResourcePolicy arp = ResourcePolicy.create(this.context);
+                ResourcePolicy arp = resourcePolicyService.create(this.context);
                 arp.setAction(Constants.READ);
-                arp.setGroup(Group.find(context, 1));
-                arp.setResource(original);
-                arp.setResourceType(Constants.BITSTREAM);
-                arp.update();
+                arp.setGroup(admin);
+                arp.setdSpaceObject(original);
+                resourcePolicyService.update(context, arp);
             }
 
             // create the anonymous read policies for each of the bitstreams
@@ -486,20 +502,19 @@ public class LivePolicyTest extends LiveTest
 
             if (rsd != null || unbound)
             {
-                ResourcePolicy rp = ResourcePolicy.create(this.context);
+                ResourcePolicy rp = resourcePolicyService.create(this.context);
                 rp.setAction(Constants.READ);
-                rp.setGroup(Group.find(context, 0));
-                rp.setResource(original);
-                rp.setResourceType(Constants.BITSTREAM);
+                rp.setGroup(anon);
+                rp.setdSpaceObject(original);
                 if (rsd != null)
                 {
                     rp.setStartDate(rsd);
                 }
-                rp.update();
+                resourcePolicyService.update(context, rp);
             }
         }
 
-        item.update();
+        itemService.update(context, item);
         this.context.commit();
 
         System.out.println("Created item with id " + item.getID());
@@ -508,18 +523,20 @@ public class LivePolicyTest extends LiveTest
         return result;
     }
 
-    private String checkItem(Item item, Map<Integer, String> anonReadResults, String metadataResult,
+    private String checkItem(Item item, Map<UUID, String> anonReadResults, String metadataResult,
                              String stateInstalled,
                              String stateState,
                              String stateEmbargo,
                              String stateRestrictions)
             throws Exception
     {
+        AuthorizeService authorizeService = AuthorizeServiceFactory.getInstance().getAuthorizeService();
+
         // check that there are no bundle policies
-        Bundle[] bundles = item.getBundles();
+        List<Bundle> bundles = item.getBundles();
         for (Bundle bundle : bundles)
         {
-            List<ResourcePolicy> all = AuthorizeManager.getPolicies(context, bundle);
+            List<ResourcePolicy> all = authorizeService.getPolicies(context, bundle);
             if (all.size() > 0)
             {
                 return "Bundle " + bundle.getName() + " has one or more policies";
@@ -533,7 +550,7 @@ public class LivePolicyTest extends LiveTest
             ContextualBitstream cbs = bsi.next();
             Bundle bundle = cbs.getBundle();
             Bitstream bitstream = cbs.getBitstream();
-            List<ResourcePolicy> existing = AuthorizeManager.getPolicies(this.context, bitstream);
+            List<ResourcePolicy> existing = authorizeService.getPolicies(this.context, bitstream);
             String anonRead = anonReadResults.get(bitstream.getID());
 
             if ("ADMIN".equals(bundle.getName()))
@@ -633,14 +650,16 @@ public class LivePolicyTest extends LiveTest
             }
         }
 
+        ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+
         // check the embargo metadata to see if it matches expectations
         String liftDateField = ConfigurationManager.getProperty("embargo.field.lift");
-        DCValue[] dcvs = item.getMetadata(liftDateField);
+        List<MetadataValue> dcvs = itemService.getMetadataByMetadataString(item, liftDateField);
         String val = null;
         Date date = null;
-        if (dcvs.length > 0)
+        if (dcvs.size() > 0)
         {
-            val = dcvs[0].value;
+            val = dcvs.get(0).getValue();
         }
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         if (val != null)
@@ -836,20 +855,23 @@ public class LivePolicyTest extends LiveTest
     private void clearResourcePolicies(Item item)
             throws Exception
     {
-        List<ResourcePolicy> existing = AuthorizeManager.getPolicies(this.context, item);
+        AuthorizeService authorizeService = AuthorizeServiceFactory.getInstance().getAuthorizeService();
+        ResourcePolicyService resourcePolicyService = AuthorizeServiceFactory.getInstance().getResourcePolicyService();
+
+        List<ResourcePolicy> existing = authorizeService.getPolicies(this.context, item);
         for (ResourcePolicy policy : existing)
         {
-            policy.delete();
+            resourcePolicyService.delete(context, policy);
         }
 
         BitstreamIterator bsi = new BitstreamIterator(item);
         while (bsi.hasNext())
         {
             Bitstream bitstream = bsi.next().getBitstream();
-            List<ResourcePolicy> bsPolicy = AuthorizeManager.getPolicies(this.context, bitstream);
+            List<ResourcePolicy> bsPolicy = authorizeService.getPolicies(this.context, bitstream);
             for (ResourcePolicy policy : bsPolicy)
             {
-                policy.delete();
+                resourcePolicyService.delete(context, policy);
             }
         }
     }

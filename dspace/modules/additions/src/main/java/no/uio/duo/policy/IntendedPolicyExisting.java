@@ -2,6 +2,7 @@ package no.uio.duo.policy;
 
 import org.dspace.authorize.ResourcePolicy;
 import org.dspace.core.Constants;
+import org.dspace.eperson.Group;
 
 import java.util.Date;
 import java.util.List;
@@ -26,7 +27,7 @@ public class IntendedPolicyExisting implements IntendedPolicyInterface
         ResourcePolicy anonRead = null;
         for (ResourcePolicy policy : existing)
         {
-            if (policy.getGroupID() == 0 && policy.getAction() == Constants.READ)
+            if (policy.getGroup().getName().equals(Group.ANONYMOUS) && policy.getAction() == Constants.READ)
             {
                 anonRead = policy;
                 break;

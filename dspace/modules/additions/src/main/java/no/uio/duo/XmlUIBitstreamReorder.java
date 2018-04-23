@@ -1,13 +1,15 @@
 package no.uio.duo;
 
 import org.dspace.app.util.Util;
-import org.dspace.app.xmlui.aspect.administrative.FlowResult;
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.Bitstream;
 import org.dspace.content.Bundle;
 import org.dspace.content.Item;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.BitstreamService;
+import org.dspace.content.service.BundleService;
 import org.dspace.core.Context;
-import org.dspace.xmlworkflow.WorkflowException;
+import org.dspace.workflow.WorkflowException;
 import org.dspace.xmlworkflow.state.Step;
 import org.dspace.xmlworkflow.state.actions.ActionResult;
 import org.dspace.xmlworkflow.state.actions.processingaction.ProcessingAction;
@@ -16,15 +18,13 @@ import org.dspace.xmlworkflow.storedcomponents.XmlWorkflowItem;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <p>Processing action to handle the change of bitstream orders in the
  * customisable workflow</p>
  *
- * <p>This presents to the user (via the related {@link XmlUIBitstreamReorderUI}) a page
+ * <p>This presents to the user a page
  * offering javascript based re-sequencing of bitstreams, and the option to move bitstreams
  * between bundles, and to finally save the result.</p>
  *
@@ -88,7 +88,7 @@ public class XmlUIBitstreamReorder extends ProcessingAction
     private void move(Context context, XmlWorkflowItem wfi, HttpServletRequest request)
             throws SQLException, AuthorizeException, IOException
     {
-        Map<Integer, Integer> moves = new HashMap<Integer, Integer>();
+        Map<UUID, UUID> moves = new HashMap<UUID, UUID>();
         Enumeration params = request.getParameterNames();
         while (params.hasMoreElements())
         {
@@ -98,25 +98,28 @@ public class XmlUIBitstreamReorder extends ProcessingAction
                 String val = request.getParameter(key);
                 if (!"-1".equals(val))
                 {
-                    int bsid = Integer.parseInt(key.substring("move_".length()));
-                    int bundleid = Integer.parseInt(val);
+                    UUID bsid = UUID.fromString(key.substring("move_".length()));
+                    UUID bundleid = UUID.fromString(val);
                     moves.put(bsid, bundleid);
                 }
             }
         }
 
-        for (Integer bsid : moves.keySet())
-        {
-            Bitstream bitstream = Bitstream.find(context, bsid);
-            Bundle target = Bundle.find(context, moves.get(bsid));
+        BitstreamService bitstreamService = ContentServiceFactory.getInstance().getBitstreamService();
+        BundleService bundleService = ContentServiceFactory.getInstance().getBundleService();
 
-            Bundle[] existing = bitstream.getBundles();
-            target.addBitstream(bitstream);
-            target.update();
+        for (UUID bsid : moves.keySet())
+        {
+            Bitstream bitstream = bitstreamService.find(context, bsid);
+            Bundle target = bundleService.find(context, moves.get(bsid));
+
+            List<Bundle> existing = bitstream.getBundles();
+            bundleService.addBitstream(context, target, bitstream);
+            bundleService.update(context, target);
             for (Bundle b : existing)
             {
-                b.removeBitstream(bitstream);
-                b.update();
+                bundleService.removeBitstream(context, b, bitstream);
+                bundleService.update(context, b);
             }
         }
     }
@@ -125,12 +128,12 @@ public class XmlUIBitstreamReorder extends ProcessingAction
             throws SQLException, AuthorizeException
     {
         Item item = wfi.getItem();
-        Bundle[] bundles = item.getBundles();
+        List<Bundle> bundles = item.getBundles();
         for (Bundle bundle : bundles)
         {
-            Bitstream[] bitstreams = bundle.getBitstreams();
+            List<Bitstream> bitstreams = bundle.getBitstreams();
 
-            int[] newBitstreamOrder = new int[bitstreams.length];
+            UUID[] newBitstreamOrder = new UUID[bitstreams.size()];
 
             for (Bitstream bitstream : bitstreams)
             {
@@ -143,11 +146,13 @@ public class XmlUIBitstreamReorder extends ProcessingAction
                 newBitstreamOrder[order] = bitstream.getID();
             }
 
+            BundleService bundleService = ContentServiceFactory.getInstance().getBundleService();
+
             if (newBitstreamOrder != null)
             {
                 //Set the new order in our bundle !
-                bundle.setOrder(newBitstreamOrder);
-                bundle.update();
+                bundleService.setOrder(context, bundle, newBitstreamOrder);
+                bundleService.update(context, bundle);
             }
         }
     }

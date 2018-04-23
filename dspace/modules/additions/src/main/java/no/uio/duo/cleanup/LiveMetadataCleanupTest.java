@@ -8,6 +8,9 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
 import org.dspace.content.Item;
 import org.dspace.content.WorkspaceItem;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.ItemService;
+import org.dspace.content.service.WorkspaceItemService;
 
 /**
  * A Live test for ensuring that HTML can be cleared from metadata.  When run it produces an item with
@@ -73,16 +76,18 @@ public class LiveMetadataCleanupTest extends LiveTest
             throws Exception
     {
         // make the item in the collection
-        WorkspaceItem wsi = WorkspaceItem.create(this.context, this.collection, false);
+        WorkspaceItemService workspaceItemService = ContentServiceFactory.getInstance().getWorkspaceItemService();
+        WorkspaceItem wsi = workspaceItemService.create(this.context, this.collection,false);
         Item item = wsi.getItem();
 
         WorkflowManagerWrapper.startWithoutNotify(this.context, wsi);
-        item = Item.find(this.context, item.getID());
+        ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+        item = itemService.find(this.context, item.getID());
 
-        item.addMetadata("dc", "title", null, null, "This title has <br> <html> in it </div>");
-        item.addMetadata("dc", "description", "abstract", null, "This abstract also has <br> <html> in it </div>");
+        itemService.addMetadata(context, item, "dc", "title", null, null, "This title has <br> <html> in it </div>");
+        itemService.addMetadata(context, item, "dc", "description", "abstract", null, "This abstract also has <br> <html> in it </div>");
 
-        item.update();
+        itemService.update(context, item);
         this.context.commit();
 
         return item;

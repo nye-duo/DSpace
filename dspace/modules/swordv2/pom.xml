@@ -131,6 +131,12 @@
         <artifactId>dspace-swordv2</artifactId>
         <type>jar</type>
         <classifier>classes</classifier>
+        <exclusions>
+            <exclusion>
+                <artifactId>xom</artifactId>
+                <groupId>xom</groupId>
+            </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
