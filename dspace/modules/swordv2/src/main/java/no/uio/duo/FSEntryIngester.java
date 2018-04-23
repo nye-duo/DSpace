@@ -189,7 +189,7 @@ public class FSEntryIngester implements SwordEntryIngester
         }
 
         // deal with the grade
-        String gradeField = ConfigurationManager.getProperty("studentweb", "grade.field");
+        String gradeField = ConfigurationManager.getProperty("studentweb.grade.field");
         if (gradeField == null || "".equals(gradeField))
         {
             throw new DuoException("No configuration, or configuration is invalid for: studentweb:grade.field");
@@ -205,7 +205,7 @@ public class FSEntryIngester implements SwordEntryIngester
         this.addFieldToItem(context, se.getEntry(), item, DuoConstants.EMBARGO_END_DATE_QNAME, embargoEndField);
 
         // deal with the embargo type
-        String embargoTypeField = ConfigurationManager.getProperty("studentweb", "embargo-type.field");
+        String embargoTypeField = ConfigurationManager.getProperty("studentweb.embargo-type.field");
         if (embargoTypeField == null || "".equals(embargoTypeField))
         {
             throw new DuoException("No configuration, or configuration is invalid for: embargo-type.field");

@@ -62,8 +62,8 @@ public class MetadataManager
 
             // get the fields which need special treatment
             String embargoEndMd = ConfigurationManager.getProperty("embargo.field.terms");
-            String embargoTypeMd = ConfigurationManager.getProperty("studentweb", "embargo-type.field");
-            String gradeMd = ConfigurationManager.getProperty("studentweb", "grade.field");
+            String embargoTypeMd = ConfigurationManager.getProperty("studentweb.embargo-type.field");
+            String gradeMd = ConfigurationManager.getProperty("studentweb.grade.field");
 
             List<MetadataValue> embargoEnds = null;
             List<MetadataValue> embargoType = null;
