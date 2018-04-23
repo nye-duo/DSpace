@@ -2,17 +2,25 @@ package no.uio.duo.policy;
 
 import no.uio.duo.BitstreamIterator;
 import no.uio.duo.DuoException;
+import no.uio.duo.MetadataFieldRepresentation;
 import no.uio.duo.MetadataManager;
 import org.apache.log4j.Logger;
 import org.dspace.authorize.AuthorizeException;
-import org.dspace.authorize.AuthorizeManager;
 import org.dspace.authorize.ResourcePolicy;
+import org.dspace.authorize.factory.AuthorizeServiceFactory;
+import org.dspace.authorize.service.AuthorizeService;
+import org.dspace.authorize.service.ResourcePolicyService;
 import org.dspace.content.*;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.BundleService;
+import org.dspace.content.service.ItemService;
 import org.dspace.core.ConfigurationManager;
 import org.dspace.core.Constants;
 import org.dspace.core.Context;
-import org.dspace.core.PluginManager;
+import org.dspace.core.factory.CoreServiceFactory;
+import org.dspace.core.service.PluginService;
 import org.dspace.embargo.EmbargoSetter;
+import org.dspace.eperson.Group;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -62,6 +70,12 @@ public class PolicyPatternManager
     /** log4j logger */
     private static Logger log = Logger.getLogger(PolicyPatternManager.class);
 
+    private ResourcePolicyService resourcePolicyService = AuthorizeServiceFactory.getInstance().getResourcePolicyService();
+    private ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+    private PluginService pluginService = CoreServiceFactory.getInstance().getPluginService();
+    private AuthorizeService authorizeService = AuthorizeServiceFactory.getInstance().getAuthorizeService();
+    private BundleService bundleService = ContentServiceFactory.getInstance().getBundleService();
+
     /**
      * Inner class to allow us to keep track of the latest (in time) embargo date, as processing
      * of bitstreams progresses
@@ -99,10 +113,9 @@ public class PolicyPatternManager
      * @param intendedPolicyImpl
      * @throws SQLException
      * @throws AuthorizeException
-     * @throws IOException
      */
     private void applyPolicyRules(Item item, Context context, IntendedPolicyInterface intendedPolicyImpl)
-            throws SQLException, AuthorizeException, IOException
+            throws SQLException, AuthorizeException
     {
         Date embargoDate = this.getEmbargoDate(item, context);
         EmbargoDateTracker tracker = new EmbargoDateTracker();
@@ -127,7 +140,7 @@ public class PolicyPatternManager
                 IntendedPolicy intendedPolicy = intendedPolicyImpl.getIntendedPolicies(readPolicies, embargoDate);
                 List<ResourcePolicy> alsoRemove = this.filterUnnecessaryPolicies(readPolicies, intendedPolicy);
                 removePolicies.addAll(alsoRemove);
-                this.removePolicies(removePolicies);
+                this.removePolicies(context, removePolicies);
                 if (removePolicies.size() > 0)
                 {
                     log.info("PolicyPatternManager removed " + removePolicies.size() + " unwanted policies from bitstream " + cb.getBitstream().getID());
@@ -136,7 +149,7 @@ public class PolicyPatternManager
                 if (!intendedPolicy.isSatisfied())
                 {
                     ResourcePolicy policy = intendedPolicy.makePolicy(context, cb.getBitstream());
-                    policy.update();
+                    resourcePolicyService.update(context, policy);
                     log.info("PolicyPatternManager applied new policy on bitstream " + cb.getBitstream().getID());
                 }
 
@@ -146,8 +159,8 @@ public class PolicyPatternManager
             else
             {
                 // just remove all the policies, we don't want any policies on other bundles' bitstreams
-                this.removePolicies(removePolicies);
-                this.removePolicies(readPolicies);
+                this.removePolicies(context, removePolicies);
+                this.removePolicies(context, readPolicies);
 
                 if (removePolicies.size() > 0)
                 {
@@ -162,7 +175,7 @@ public class PolicyPatternManager
             this.removeDudEmbargoDate(embargoDate, item, context);
         }
 
-        item.update();
+        itemService.update(context, item);
     }
 
     /**
@@ -197,10 +210,9 @@ public class PolicyPatternManager
      * @param context
      * @throws SQLException
      * @throws AuthorizeException
-     * @throws IOException
      */
     public void applyToNewItem(Item item, Context context)
-            throws SQLException, AuthorizeException, IOException
+            throws SQLException, AuthorizeException
     {
         if (log.isDebugEnabled())
         {
@@ -224,6 +236,7 @@ public class PolicyPatternManager
      * @param context
      */
     private void normaliseEmbargoDate(EmbargoDateTracker tracker, Date embargoDate, Item item, Context context)
+        throws SQLException
     {
         if (log.isDebugEnabled())
         {
@@ -316,6 +329,7 @@ public class PolicyPatternManager
      * @param context
      */
     private void removeDudEmbargoDate(Date embargoDate, Item item, Context context)
+        throws SQLException
     {
         if (embargoDate == null)
         {
@@ -336,10 +350,9 @@ public class PolicyPatternManager
      * @return
      * @throws SQLException
      * @throws AuthorizeException
-     * @throws IOException
      */
     private Date getEmbargoDate(Item item, Context context)
-            throws SQLException, AuthorizeException, IOException
+            throws SQLException, AuthorizeException
     {
         // first check that there is a date
         String liftDateField = ConfigurationManager.getProperty("embargo.field.lift");
@@ -349,8 +362,8 @@ public class PolicyPatternManager
         }
 
         // if there is no embargo value, the item isn't embargoed
-        DCValue[] embargoes = item.getMetadata(liftDateField);
-        if (embargoes.length == 0)
+        List<MetadataValue> embargoes = itemService.getMetadataByMetadataString(item, liftDateField);
+        if (embargoes.size() == 0)
         {
             return null;
         }
@@ -359,8 +372,8 @@ public class PolicyPatternManager
         // we can't use this, as it validates the date of the embargo, which we don't want
         // DCDate embargoDate = EmbargoManager.getEmbargoTermsAsDate(context, item);
 
-        EmbargoSetter setter = (EmbargoSetter) PluginManager.getSinglePlugin(EmbargoSetter.class);
-        DCDate embargoDate = setter.parseTerms(context, item, embargoes[0].value);
+        EmbargoSetter setter = (EmbargoSetter) pluginService.getSinglePlugin(EmbargoSetter.class);
+        DCDate embargoDate = setter.parseTerms(context, item, embargoes.get(0).getValue());
         if (embargoDate == null)
         {
             // this can happen if the embargo date was an empty field, or malformed in the metadata
@@ -377,6 +390,7 @@ public class PolicyPatternManager
      * @param context
      */
     private void setEmbargoDate(Date newDate, Item item, Context context)
+        throws SQLException
     {
         String liftDateField = ConfigurationManager.getProperty("embargo.field.lift");
         if (liftDateField == null)
@@ -388,7 +402,7 @@ public class PolicyPatternManager
         String formatted = sdf.format(newDate);
 
         MetadataManager mm = new MetadataManager();
-        DCValue dcv;
+        MetadataFieldRepresentation dcv;
         try
         {
             dcv = mm.makeDCValue(liftDateField, formatted);
@@ -399,21 +413,21 @@ public class PolicyPatternManager
             return;
         }
 
-        DCValue[] originals = item.getMetadata(liftDateField);
-        item.clearMetadata(dcv.schema, dcv.element, dcv.qualifier, Item.ANY);
-        item.addMetadata(dcv.schema, dcv.element, dcv.qualifier, null, dcv.value);
+        List<MetadataValue> originals = itemService.getMetadataByMetadataString(item, liftDateField);
+        itemService.clearMetadata(context, item, dcv.schema, dcv.element, dcv.qualifier, Item.ANY);
+        itemService.addMetadata(context, item, dcv.schema, dcv.element, dcv.qualifier, null, dcv.value);
 
         String original = "[no date]";
-        if (originals.length > 0)
+        if (originals.size() > 0)
         {
-            original = originals[0].value;
+            original = originals.get(0).getValue();
         }
 
         SimpleDateFormat stamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         String prefix = "[" + stamp.format(new Date()) + "] ";
 
         String provenance = prefix + "Policy pattern application modified embargo date metadata: from '" + original + "' to '" + dcv.value + "'";
-        item.addMetadata("dc", "description", "provenance", null, provenance);
+        itemService.addMetadata(context, item, "dc", "description", "provenance", null, provenance);
         log.info("Item " + item.getID() + " " + provenance);
     }
 
@@ -424,6 +438,7 @@ public class PolicyPatternManager
      * @param context
      */
     private void removeEmbargoDate(Item item, Context context)
+        throws SQLException
     {
         String liftDateField = ConfigurationManager.getProperty("embargo.field.lift");
         if (liftDateField == null)
@@ -434,8 +449,8 @@ public class PolicyPatternManager
         String termsField = ConfigurationManager.getProperty("embargo.field.terms");
 
         MetadataManager mm = new MetadataManager();
-        DCValue dcv;
-        DCValue terms = null;
+        MetadataFieldRepresentation dcv;
+        MetadataFieldRepresentation terms = null;
         try
         {
             dcv = mm.makeDCValue(liftDateField, "");
@@ -451,24 +466,24 @@ public class PolicyPatternManager
         }
 
 
-        DCValue[] originals = item.getMetadata(liftDateField);
-        item.clearMetadata(dcv.schema, dcv.element, dcv.qualifier, Item.ANY);
+        List<MetadataValue> originals = itemService.getMetadataByMetadataString(item, liftDateField);
+        itemService.clearMetadata(context, item, dcv.schema, dcv.element, dcv.qualifier, Item.ANY);
         if (terms != null)
         {
-            item.clearMetadata(terms.schema, terms.element, terms.qualifier, Item.ANY);
+            itemService.clearMetadata(context, item, terms.schema, terms.element, terms.qualifier, Item.ANY);
         }
 
         String original = "[no date]";
-        if (originals.length > 0)
+        if (originals.size() > 0)
         {
-            original = originals[0].value;
+            original = originals.get(0).getValue();
         }
 
         SimpleDateFormat stamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         String prefix = "[" + stamp.format(new Date()) + "] ";
 
         String provenance = prefix + "Policy pattern application removed embargo date, was: '" + original + "'";
-        item.addMetadata("dc", "description", "provenance", null, provenance);
+        itemService.addMetadata(context, item, "dc", "description", "provenance", null, provenance);
         log.info("Item " + item.getID() + " " + provenance);
     }
 
@@ -484,7 +499,7 @@ public class PolicyPatternManager
             throws SQLException
     {
         List<ResourcePolicy> read = new ArrayList<ResourcePolicy>();
-        List<ResourcePolicy> all = AuthorizeManager.getPolicies(context, dso);
+        List<ResourcePolicy> all = authorizeService.getPolicies(context, dso);
         for (ResourcePolicy rp : all)
         {
             if (rp.getAction() == Constants.READ)
@@ -512,7 +527,7 @@ public class PolicyPatternManager
             ResourcePolicy policy = existing.get(i);
 
             // if this is an Admin READ policy
-            if (policy.getGroupID() == 1 && policy.getAction() == Constants.READ)
+            if (policy.getGroup().getName().equals(Group.ADMIN) && policy.getAction() == Constants.READ)
             {
                 idxs.add(i);
                 unwanted.add(policy);
@@ -586,12 +601,12 @@ public class PolicyPatternManager
     private void removeAllBundlePolicies(Context context, Item item)
             throws SQLException, AuthorizeException
     {
-        Bundle[] bundles = item.getBundles();
+        List<Bundle> bundles = item.getBundles();
         for (Bundle bundle : bundles)
         {
-            List<ResourcePolicy> all = AuthorizeManager.getPolicies(context, bundle);
-            this.removePolicies(all);
-            bundle.update();
+            List<ResourcePolicy> all = authorizeService.getPolicies(context, bundle);
+            this.removePolicies(context, all);
+            bundleService.update(context, bundle);
         }
     }
 
@@ -601,12 +616,12 @@ public class PolicyPatternManager
      * @param policies
      * @throws SQLException
      */
-    private void removePolicies(List<ResourcePolicy> policies)
-            throws SQLException
+    private void removePolicies(Context context, List<ResourcePolicy> policies)
+            throws SQLException, AuthorizeException
     {
         for (ResourcePolicy policy : policies)
         {
-            policy.delete();
+            resourcePolicyService.delete(context, policy);
         }
     }
 }

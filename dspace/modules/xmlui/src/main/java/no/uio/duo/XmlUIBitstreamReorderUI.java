@@ -10,16 +10,15 @@ import org.dspace.app.xmlui.wing.WingException;
 import org.dspace.app.xmlui.wing.element.Body;
 import org.dspace.app.xmlui.wing.element.Button;
 import org.dspace.app.xmlui.wing.element.Cell;
-import org.dspace.app.xmlui.wing.element.CheckBox;
 import org.dspace.app.xmlui.wing.element.Division;
 import org.dspace.app.xmlui.wing.element.Highlight;
 import org.dspace.app.xmlui.wing.element.PageMeta;
-import org.dspace.app.xmlui.wing.element.Para;
 import org.dspace.app.xmlui.wing.element.Row;
 import org.dspace.app.xmlui.wing.element.Select;
 import org.dspace.app.xmlui.wing.element.Table;
 import org.dspace.authorize.AuthorizeException;
-import org.dspace.authorize.AuthorizeManager;
+import org.dspace.authorize.factory.AuthorizeServiceFactory;
+import org.dspace.authorize.service.AuthorizeService;
 import org.dspace.content.Bitstream;
 import org.dspace.content.BitstreamFormat;
 import org.dspace.content.Bundle;
@@ -31,6 +30,8 @@ import org.xml.sax.SAXException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * XMLUI Action to provide a bitstream reorder UI
@@ -105,7 +106,7 @@ public class XmlUIBitstreamReorderUI extends AbstractXMLUIAction
         header.addCellContent("Was");
 		header.addCellContent(T_column7);
 
-		Bundle[] bundles = item.getBundles();
+		List<Bundle> bundles = item.getBundles();
 
 		for (Bundle bundle : bundles)
 		{
@@ -113,15 +114,15 @@ public class XmlUIBitstreamReorderUI extends AbstractXMLUIAction
 			Cell bundleCell = files.addRow("bundle_head_" + bundle.getID(), Row.ROLE_DATA, "").addCell(1, 5);
 			bundleCell.addContent(T_bundle_label.parameterize(bundle.getName()));
 
-			Bitstream[] bitstreams = bundle.getBitstreams();
-            ArrayList<Integer> bitstreamIdOrder = new ArrayList<Integer>();
+			List<Bitstream> bitstreams = bundle.getBitstreams();
+            ArrayList<UUID> bitstreamIdOrder = new ArrayList<UUID>();
             for (Bitstream bitstream : bitstreams) {
                 bitstreamIdOrder.add(bitstream.getID());
             }
 
-            for (int bitstreamIndex = 0; bitstreamIndex < bitstreams.length; bitstreamIndex++) {
-                Bitstream bitstream = bitstreams[bitstreamIndex];
-                boolean primary = (bundle.getPrimaryBitstreamID() == bitstream.getID());
+            for (int bitstreamIndex = 0; bitstreamIndex < bitstreams.size(); bitstreamIndex++) {
+                Bitstream bitstream = bitstreams.get(bitstreamIndex);
+                boolean primary = (bundle.getPrimaryBitstream().getID() == bitstream.getID());
                 String name = bitstream.getName();
 
                 if (name != null && name.length() > 50) {
@@ -134,7 +135,7 @@ public class XmlUIBitstreamReorderUI extends AbstractXMLUIAction
 
                 String description = bitstream.getDescription();
                 String format = null;
-                BitstreamFormat bitstreamFormat = bitstream.getFormat();
+                BitstreamFormat bitstreamFormat = bitstream.getFormat(context);
                 if (bitstreamFormat != null) {
                     format = bitstreamFormat.getShortDescription();
                 }
@@ -150,12 +151,13 @@ public class XmlUIBitstreamReorderUI extends AbstractXMLUIAction
                 {
                     if (b.getID() != bundle.getID())
                     {
-                        sel.addOption(Integer.toString(b.getID()), b.getName());
+                        sel.addOption(b.getID().toString(), b.getName());
                     }
                 }
                 moveCell.addButton("submit_move").setValue("Go");
 
-                if (AuthorizeManager.authorizeActionBoolean(context, bitstream, Constants.WRITE)) {
+                AuthorizeService authorizeService = AuthorizeServiceFactory.getInstance().getAuthorizeService();
+                if (authorizeService.authorizeActionBoolean(context, bitstream, Constants.WRITE)) {
                     // The user can edit the bitstream give them a link.
                     Cell cell = row.addCell();
                     cell.addXref(editURL, name);
@@ -180,7 +182,7 @@ public class XmlUIBitstreamReorderUI extends AbstractXMLUIAction
                 highlight.addXref(viewURL, T_view_link);
                 highlight.addContent("]");
 
-                if (AuthorizeManager.authorizeActionBoolean(context, bundle, Constants.WRITE)) {
+                if (authorizeService.authorizeActionBoolean(context, bundle, Constants.WRITE)) {
                     // FIXME: this need working out ...
                     Cell cell = row.addCell("bitstream_order_" + bitstream.getID(), Cell.ROLE_DATA, "");
                     cell.addContent(String.valueOf(bitstreamIndex + 1));
@@ -201,8 +203,8 @@ public class XmlUIBitstreamReorderUI extends AbstractXMLUIAction
                     }
                     upButton.setValue(T_order_up);
                     upButton.setHelp(T_order_up);
-                    Button downButton = cell.addButton("submit_order_" + bundle.getID() + "_" + bitstream.getID() + "_down", (bitstreamIndex == (bitstreams.length - 1) ? "disabled" : "") + " icon-button arrowDown ");
-                    if(bitstreamIndex == (bitstreams.length - 1)){
+                    Button downButton = cell.addButton("submit_order_" + bundle.getID() + "_" + bitstream.getID() + "_down", (bitstreamIndex == (bitstreams.size() - 1) ? "disabled" : "") + " icon-button arrowDown ");
+                    if(bitstreamIndex == (bitstreams.size() - 1)){
                         downButton.setDisabled();
                     }
                     downButton.setValue(T_order_down);

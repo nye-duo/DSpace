@@ -321,7 +321,7 @@ public class CristinOREImporter implements IngestionCrosswalk, OAIConfigurableCr
         }
 
         // 5 - ensure that the resulting order of the bitstreams is commensurate with the incoming bitstreams
-        fm.sequenceBitstreams(item, "ORIGINAL", incomingBitstreams);
+        fm.sequenceBitstreams(context, item, "ORIGINAL", incomingBitstreams);
 
         return metadataBitstream;
     }

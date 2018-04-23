@@ -4,8 +4,10 @@ import org.dspace.app.util.Util;
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.Collection;
 import org.dspace.content.Item;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.CollectionService;
 import org.dspace.core.Context;
-import org.dspace.xmlworkflow.WorkflowException;
+import org.dspace.workflow.WorkflowException;
 import org.dspace.xmlworkflow.state.Step;
 import org.dspace.xmlworkflow.state.actions.ActionResult;
 import org.dspace.xmlworkflow.state.actions.processingaction.ProcessingAction;
@@ -14,15 +16,12 @@ import org.dspace.xmlworkflow.storedcomponents.XmlWorkflowItem;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <p>Processing action to handle the assignment of an item to multiple collections</p>
  *
- * <p>This presents the user (via the related {@link XmlUICollectionAssignmentUI}) with a
+ * <p>This presents the user  with a
  * full list of the collections in the reposiory, and options to check/un-check those
  * collections to which the item should be mapped.</p>
  *
@@ -66,7 +65,7 @@ public class XmlUICollectionAssignment extends ProcessingAction
             throws SQLException, AuthorizeException, IOException
     {
         // first get a list of the ids to map to
-        List<Integer> mapTo = new ArrayList<Integer>();
+        List<UUID> mapTo = new ArrayList<UUID>();
 
         Enumeration e = request.getParameterNames();
         while (e.hasMoreElements())
@@ -74,26 +73,27 @@ public class XmlUICollectionAssignment extends ProcessingAction
             String key = (String) e.nextElement();
             if (key.startsWith("mapped_collection_"))
             {
-                mapTo.add(Integer.parseInt(request.getParameter(key)));
+                mapTo.add(UUID.fromString(request.getParameter(key)));
             }
         }
 
         // now pass through the item and add it to/remove it from the relevant collections
         Item item = wfi.getItem();
-        Collection[] collections = item.getCollections();
+        List<Collection> collections = item.getCollections();
         Collection owner = wfi.getCollection();
 
         // remove it from existing collections (or record that the item is
         // already in a collection it is supposed to me in)
-        List<Integer> alreadyIn = new ArrayList<Integer>();
+        CollectionService collectionService = ContentServiceFactory.getInstance().getCollectionService();
+        List<UUID> alreadyIn = new ArrayList<UUID>();
         for (Collection col : collections)
         {
             // if the collection's id is not in the mapTo list and is not the owning
             // collection then delete the item from that collection
             if (!mapTo.contains(col.getID()) && col.getID() != owner.getID())
             {
-                col.removeItem(item);
-                col.update();
+                collectionService.removeItem(context, col, item);
+                collectionService.update(context, col);
             }
             else if (mapTo.contains(col.getID()))
             {
@@ -103,16 +103,16 @@ public class XmlUICollectionAssignment extends ProcessingAction
 
         // add the item to all the necessary collections that it is not
         // already added to
-        for (Integer colID : mapTo)
+        for (UUID colID : mapTo)
         {
             // if it is already in the desired collection, just carry on
             if (alreadyIn.contains(colID))
             {
                 continue;
             }
-            Collection col = Collection.find(context, colID);
-            col.addItem(item);
-            col.update();
+            Collection col = collectionService.find(context, colID);
+            collectionService.addItem(context, col, item);
+            collectionService.update(context, col);
         }
     }
 }

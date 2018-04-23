@@ -9,12 +9,17 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.dspace.authorize.AuthorizeManager;
 import org.dspace.authorize.ResourcePolicy;
+import org.dspace.authorize.factory.AuthorizeServiceFactory;
+import org.dspace.authorize.service.AuthorizeService;
 import org.dspace.content.*;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.ItemService;
+import org.dspace.content.service.WorkspaceItemService;
 import org.dspace.core.ConfigurationManager;
 import org.dspace.core.Context;
-import org.dspace.eperson.EPerson;
+import org.dspace.eperson.factory.EPersonServiceFactory;
+import org.dspace.eperson.service.EPersonService;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -125,9 +130,10 @@ public class LiveReinstateTest extends LiveTest
         this.testMatrix = csv.getRecords();
 
         this.context = new Context();
-        this.context.setIgnoreAuthorization(true);
+        this.context.turnOffAuthorisationSystem();
 
-        this.eperson = EPerson.findByEmail(this.context, epersonEmail);
+        EPersonService ePersonService = EPersonServiceFactory.getInstance().getEPersonService();
+        this.eperson = ePersonService.findByEmail(this.context, epersonEmail);
         this.context.setCurrentUser(this.eperson);
 
         this.collection = this.makeCollection();
@@ -245,15 +251,16 @@ public class LiveReinstateTest extends LiveTest
         ItemMakeRecord archived = this.makeItem(grade, embargo, embargoType, "withdrawn");
 
         // make a map from bitstream id to expected anonRead results
-        Map<Integer, String> readMap = new HashMap<Integer, String>();
+        Map<UUID, String> readMap = new HashMap<UUID, String>();
         for (int i = 0; i < archived.bitstreamIDs.size(); i++)
         {
             readMap.put(archived.bitstreamIDs.get(i), anonReadResult);
         }
 
         // now reinstate the item
-        archived.item.reinstate();
-        archived.item.update();
+        ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+        itemService.reinstate(context, archived.item);
+        itemService.update(context, archived.item);
         this.context.commit();
 
         // check the item for appropriate policies
@@ -264,7 +271,7 @@ public class LiveReinstateTest extends LiveTest
         this.testEnd(name);
     }
 
-    private void checkAndPrint(String testName, Item item, Map<Integer, String> anonReadResults, String resultStatus, int originalFiles, int adminFiles,
+    private void checkAndPrint(String testName, Item item, Map<UUID, String> anonReadResults, String resultStatus, int originalFiles, int adminFiles,
                                String stateInstalled,
                                String stateState,
                                String stateGrade,
@@ -297,7 +304,8 @@ public class LiveReinstateTest extends LiveTest
         ItemMakeRecord result = new ItemMakeRecord();
 
         // make the item in the collection
-        WorkspaceItem wsi = WorkspaceItem.create(this.context, this.collection, false);
+        WorkspaceItemService workspaceItemService = ContentServiceFactory.getInstance().getWorkspaceItemService();
+        WorkspaceItem wsi = workspaceItemService.create(this.context, this.collection, false);
         Item item = wsi.getItem();
 
         // set the metadata
@@ -309,20 +317,21 @@ public class LiveReinstateTest extends LiveTest
         originals.add(original);
         result.bitstreamIDs.add(original.getID());
 
+        ItemService itemService = ContentServiceFactory.getInstance().getItemService();
         // put the item in the right state
         if ("archive".equals(state))
         {
             WorkflowManagerWrapper.startWithoutNotify(this.context, wsi);
-            item = Item.find(this.context, item.getID());
+            item = itemService.find(this.context, item.getID());
         }
         else if ("withdrawn".equals(state))
         {
             WorkflowManagerWrapper.startWithoutNotify(this.context, wsi);
-            item = Item.find(this.context, item.getID());
-            item.withdraw();
+            item = itemService.find(this.context, item.getID());
+            itemService.withdraw(context, item);
         }
 
-        item.update();
+        itemService.update(context, item);
         this.context.commit();
 
         System.out.println("Created item with id " + item.getID());
@@ -335,25 +344,26 @@ public class LiveReinstateTest extends LiveTest
             throws Exception
     {
         MetadataManager mm = new MetadataManager();
+        ItemService itemService = ContentServiceFactory.getInstance().getItemService();
 
-        String gradeField = ConfigurationManager.getProperty("studentweb", "grade.field");
-        DCValue gradeDcv = mm.makeDCValue(gradeField, null);
+        String gradeField = ConfigurationManager.getProperty("studentweb.grade.field");
+        MetadataFieldRepresentation gradeDcv = mm.makeDCValue(gradeField, null);
 
         String embargoField = ConfigurationManager.getProperty("embargo.field.terms");
-        DCValue embargoDcv = mm.makeDCValue(embargoField, null);
+        MetadataFieldRepresentation embargoDcv = mm.makeDCValue(embargoField, null);
 
-        String typeField = ConfigurationManager.getProperty("studentweb", "embargo-type.field");
-        DCValue typeDcv = mm.makeDCValue(typeField, null);
+        String typeField = ConfigurationManager.getProperty("studentweb.embargo-type.field");
+        MetadataFieldRepresentation typeDcv = mm.makeDCValue(typeField, null);
 
         // clear any old metadata
-        item.clearMetadata(gradeDcv.schema, gradeDcv.element, gradeDcv.qualifier, null);
-        item.clearMetadata(embargoDcv.schema, embargoDcv.element, embargoDcv.qualifier, null);
-        item.clearMetadata(typeDcv.schema, typeDcv.element, typeDcv.qualifier, null);
+        itemService.clearMetadata(context, item, gradeDcv.schema, gradeDcv.element, gradeDcv.qualifier, null);
+        itemService.clearMetadata(context, item, embargoDcv.schema, embargoDcv.element, embargoDcv.qualifier, null);
+        itemService.clearMetadata(context, item, typeDcv.schema, typeDcv.element, typeDcv.qualifier, null);
 
         // set the grade
         if (!"none".equals(grade))
         {
-            item.addMetadata(gradeDcv.schema, gradeDcv.element, gradeDcv.qualifier, null, grade);
+            itemService.addMetadata(context, item, gradeDcv.schema, gradeDcv.element, gradeDcv.qualifier, null, grade);
         }
 
         // set the embargo date
@@ -391,17 +401,17 @@ public class LiveReinstateTest extends LiveTest
 
         if (ed != null)
         {
-            item.addMetadata(embargoDcv.schema, embargoDcv.element, embargoDcv.qualifier, null, ed);
+            itemService.addMetadata(context, item, embargoDcv.schema, embargoDcv.element, embargoDcv.qualifier, null, ed);
         }
 
         // add the embargo type
         if (!"none".equals(embargoType))
         {
-            item.addMetadata(typeDcv.schema, typeDcv.element, typeDcv.qualifier, null, embargoType);
+            itemService.addMetadata(context, item, typeDcv.schema, typeDcv.element, typeDcv.qualifier, null, embargoType);
         }
     }
 
-    private String checkItem(Item item, Map<Integer, String> anonReadResults, String resultStatus, int originalFiles, int adminFiles,
+    private String checkItem(Item item, Map<UUID, String> anonReadResults, String resultStatus, int originalFiles, int adminFiles,
                              String stateInstalled,
                              String stateState,
                              String stateGrade,
@@ -419,7 +429,8 @@ public class LiveReinstateTest extends LiveTest
             ContextualBitstream cbs = bsi.next();
             Bundle bundle = cbs.getBundle();
             Bitstream bitstream = cbs.getBitstream();
-            List<ResourcePolicy> existing = AuthorizeManager.getPolicies(this.context, bitstream);
+            AuthorizeService authorizeService = AuthorizeServiceFactory.getInstance().getAuthorizeService();
+            List<ResourcePolicy> existing = authorizeService.getPolicies(this.context, bitstream);
             String anonRead = anonReadResults.get(bitstream.getID());
 
             if (DuoConstants.ORIGINAL_BUNDLE.equals(bundle.getName()))

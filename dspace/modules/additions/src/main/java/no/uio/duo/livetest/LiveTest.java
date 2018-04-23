@@ -2,8 +2,12 @@ package no.uio.duo.livetest;
 
 import org.dspace.content.*;
 import org.dspace.content.Collection;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.*;
 import org.dspace.core.Context;
 import org.dspace.eperson.EPerson;
+import org.dspace.eperson.factory.EPersonServiceFactory;
+import org.dspace.eperson.service.EPersonService;
 
 import java.io.*;
 import java.util.*;
@@ -30,8 +34,8 @@ public class LiveTest
     public class CheckReport
     {
         public String testName;
-        public int reference = -1;
-        public int changed = -1;
+        public UUID reference = null;
+        public UUID changed = null;
         public String referenceHandle;
         public String changedHandle;
     }
@@ -39,7 +43,7 @@ public class LiveTest
     public class ItemMakeRecord
     {
         public Item item;
-        public List<Integer> bitstreamIDs = new ArrayList<Integer>();
+        public List<UUID> bitstreamIDs = new ArrayList<UUID>();
     }
 
     /**
@@ -53,7 +57,8 @@ public class LiveTest
     {
         this.context = new Context();
 
-        this.eperson = EPerson.findByEmail(this.context, epersonEmail);
+        EPersonService ePersonService = EPersonServiceFactory.getInstance().getEPersonService();
+        this.eperson = ePersonService.findByEmail(this.context, epersonEmail);
         this.context.setCurrentUser(this.eperson);
     }
 
@@ -131,13 +136,16 @@ public class LiveTest
     protected Collection makeCollection()
             throws Exception
     {
-        Community community = Community.create(null, this.context);
-        community.setMetadata("name", "Test Community " + community.getID());
-        community.update();
+        CommunityService communityService = ContentServiceFactory.getInstance().getCommunityService();
+        CollectionService collectionService = ContentServiceFactory.getInstance().getCollectionService();
 
-        Collection collection = community.createCollection();
-        collection.setMetadata("name", "Test Collection " + collection.getID());
-        collection.update();
+        Community community = communityService.create(null, this.context);
+        communityService.setMetadata(context, community, "name", "Test Community " + community.getID());
+        communityService.update(context, community);
+
+        Collection collection = collectionService.create(context, community);
+        collectionService.setMetadata(context, collection, "name", "Test Collection " + collection.getID());
+        collectionService.update(context, collection);
 
         this.context.commit();
 
@@ -157,7 +165,8 @@ public class LiveTest
     protected Bundle makeBundle(Item item, String bundle)
             throws Exception
     {
-        return item.createBundle(bundle);
+        BundleService bundleService = ContentServiceFactory.getInstance().getBundleService();
+        return bundleService.create(context, item, bundle);
     }
 
     /**
@@ -188,7 +197,7 @@ public class LiveTest
             throws Exception
     {
         InputStream originalFile = new FileInputStream(this.bitstream);
-        Bundle[] bundles = item.getBundles();
+        List<Bundle> bundles = item.getBundles();
 
         Bundle container = null;
         for (Bundle b : bundles)
@@ -202,12 +211,13 @@ public class LiveTest
 
         if (container == null)
         {
-            container = item.createBundle(bundle);
+            container = this.makeBundle(item, bundle);
         }
 
-        Bitstream bs = container.createBitstream(originalFile);
-        bs.setName(bundle + "file" + ident + ".txt");
-        bs.update();
+        BitstreamService bitstreamService = ContentServiceFactory.getInstance().getBitstreamService();
+        Bitstream bs = bitstreamService.create(context, container, originalFile);
+        bs.setName(context, bundle + "file" + ident + ".txt");
+        bitstreamService.update(context, bs);
         return bs;
     }
 

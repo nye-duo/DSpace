@@ -2,10 +2,14 @@ package no.uio.duo.policy;
 
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.authorize.ResourcePolicy;
+import org.dspace.authorize.factory.AuthorizeServiceFactory;
+import org.dspace.authorize.service.ResourcePolicyService;
 import org.dspace.content.Bitstream;
 import org.dspace.core.Constants;
 import org.dspace.core.Context;
 import org.dspace.eperson.Group;
+import org.dspace.eperson.factory.EPersonServiceFactory;
+import org.dspace.eperson.service.GroupService;
 
 import java.sql.SQLException;
 import java.util.Date;
@@ -88,18 +92,17 @@ public class IntendedPolicy
             boolean ed = (ped == null && eed == null) || (ped != null && ped.equals(eed));
 
             boolean act = policy.getAction() == this.existing.getAction();
-            boolean gid = policy.getGroupID() == this.existing.getGroupID();
-            boolean epid = policy.getEPersonID() == this.existing.getEPersonID();
-            boolean rid = policy.getResourceID() == this.existing.getEPersonID();
-            boolean rt = policy.getResourceType() == this.existing.getResourceType();
+            boolean gid = policy.getGroup().getID() == this.existing.getGroup().getID();
+            boolean epid = policy.getEPerson().getID() == this.existing.getEPerson().getID();
+            boolean rid = policy.getdSpaceObject().getID() == this.existing.getdSpaceObject().getID();
 
-            return sd && act && ed && gid && epid && rid && rt;
+            return sd && act && ed && gid && epid && rid;
         }
         else if (this.embargo != null)
         {
             boolean ed = this.embargo.equals(policy.getStartDate());
             boolean act = policy.getAction() == Constants.READ;
-            boolean gid = policy.getGroupID() == 0;
+            boolean gid = policy.getGroup().getName().equals(Group.ANONYMOUS);
 
             return ed && act && gid;
         }
@@ -107,7 +110,7 @@ public class IntendedPolicy
         {
             boolean ed = policy.getStartDate() == null;
             boolean act = policy.getAction() == Constants.READ;
-            boolean gid = policy.getGroupID() == 0;
+            boolean gid = policy.getGroup().getName().equals(Group.ANONYMOUS);
 
             return ed && act && gid;
         }
@@ -159,11 +162,15 @@ public class IntendedPolicy
         }
 
         // otherwise create the base policy
-        ResourcePolicy rp = ResourcePolicy.create(context);
+        ResourcePolicyService resourcePolicyService = AuthorizeServiceFactory.getInstance().getResourcePolicyService();
+        GroupService groupService = EPersonServiceFactory.getInstance().getGroupService();
+
+        Group anon = groupService.findByName(context, Group.ANONYMOUS);
+
+        ResourcePolicy rp = resourcePolicyService.create(context);
         rp.setAction(Constants.READ);
-        rp.setGroup(Group.find(context, 0));
-        rp.setResource(bitstream);
-        rp.setResourceType(Constants.BITSTREAM);
+        rp.setGroup(anon);
+        rp.setdSpaceObject(bitstream);
 
         // now set the start date
         if (this.embargo != null)

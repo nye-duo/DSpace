@@ -175,7 +175,7 @@ public class DuoEventConsumer implements Consumer
             FSRestrictionManager fsrm = new FSRestrictionManager();
             fsrm.onModifyMetadata(context, item);
 
-            state.sychroniseItemState(true);
+            state.sychroniseItemState(context, true);
         }
         else
         {
@@ -187,7 +187,7 @@ public class DuoEventConsumer implements Consumer
                 PolicyPatternManager ppm = new PolicyPatternManager();
                 ppm.applyToExistingItem(item, context);
 
-                state.sychroniseItemState(true);
+                state.sychroniseItemState(context, true);
             }
             else
             {

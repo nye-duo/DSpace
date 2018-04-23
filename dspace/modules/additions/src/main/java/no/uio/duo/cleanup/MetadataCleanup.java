@@ -7,17 +7,16 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
 import org.dspace.authorize.AuthorizeException;
-import org.dspace.content.DCValue;
 import org.dspace.content.Item;
+import org.dspace.content.MetadataValue;
+import org.dspace.content.factory.ContentServiceFactory;
+import org.dspace.content.service.ItemService;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Whitelist;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Tool to run a cleanup of all HTML in the item metadata
@@ -70,11 +69,11 @@ public class MetadataCleanup extends TraverseDSpace
         MetadataCleanup mc = new MetadataCleanup(line.getOptionValue("e"));
         if (line.hasOption("i") || line.hasOption("h"))
         {
-            int iid = -1;
+            UUID iid = null;
             String id = line.getOptionValue("i");
             if (id != null)
             {
-                iid = Integer.parseInt(id);
+                iid = UUID.fromString(id);
             }
             mc.doItem(iid, line.getOptionValue("h"));
         }
@@ -133,10 +132,10 @@ public class MetadataCleanup extends TraverseDSpace
         MetadataManager mm = new MetadataManager();
 
         Whitelist base = Whitelist.none();
-        List<DCValue> cleanMetadata = new ArrayList<DCValue>();
+        List<MetadataValue> cleanMetadata = new ArrayList<MetadataValue>();
 
-        DCValue[] allMetadata = mm.allMetadata(item);
-        for (DCValue dcv : allMetadata)
+        List<MetadataValue> allMetadata = mm.allMetadata(item);
+        for (MetadataValue dcv : allMetadata)
         {
             Whitelist custom = null;
 
@@ -157,12 +156,13 @@ public class MetadataCleanup extends TraverseDSpace
                 apply = custom;
             }
 
-            dcv.value = Jsoup.clean(dcv.value, apply);
+            dcv.setValue(Jsoup.clean(dcv.getValue(), apply));
 
             cleanMetadata.add(dcv);
         }
 
-        mm.replaceMetadata(item, cleanMetadata);
-        item.update();
+        mm.replaceMetadata(context, item, cleanMetadata);
+        ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+        itemService.update(context, item);
     }
 }

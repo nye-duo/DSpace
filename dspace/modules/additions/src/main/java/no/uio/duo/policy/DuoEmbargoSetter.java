@@ -3,16 +3,13 @@ package no.uio.duo.policy;
 import org.apache.log4j.Logger;
 import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.*;
-import org.dspace.core.ConfigurationManager;
 import org.dspace.core.Context;
-import org.dspace.core.PluginManager;
+import org.dspace.core.factory.CoreServiceFactory;
+import org.dspace.core.service.PluginService;
 import org.dspace.embargo.EmbargoSetter;
-import org.dspace.handle.HandleManager;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * <p>Implementation of the DSpace EmbargoSetter interface which applies the duo policy pattern where appropriate.</p>
@@ -48,7 +45,8 @@ public class DuoEmbargoSetter implements EmbargoSetter
 
     public DuoEmbargoSetter()
     {
-        this.fallback = (EmbargoSetter) PluginManager.getNamedPlugin(EmbargoSetter.class, "fallback");
+        PluginService pluginService = CoreServiceFactory.getInstance().getPluginService();
+        this.fallback = (EmbargoSetter) pluginService.getNamedPlugin(EmbargoSetter.class, "fallback");
         this.policies = new PolicyPatternManager();
     }
 
@@ -65,7 +63,7 @@ public class DuoEmbargoSetter implements EmbargoSetter
      */
     @Override
     public DCDate parseTerms(Context context, Item item, String s)
-            throws SQLException, AuthorizeException, IOException
+            throws SQLException, AuthorizeException
     {
         return this.fallback.parseTerms(context, item, s);
     }
@@ -83,7 +81,7 @@ public class DuoEmbargoSetter implements EmbargoSetter
      */
     @Override
     public void setEmbargo(Context context, Item item)
-            throws SQLException, AuthorizeException, IOException
+            throws SQLException, AuthorizeException
     {
         log.info("Setting embargo on item " + item.getID());
         if (PolicyApplicationFilter.allow(context, item))
