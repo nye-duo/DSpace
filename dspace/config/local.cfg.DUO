@@ -1,0 +1,52 @@
+###########################
+# Other Configuration
+###########################
+
+# Embargo details.
+#
+# these two fields are deliberately set the same...
+#
+# DC metadata field to hold the user-supplied embargo terms
+embargo.field.terms = dc.date.embargoenddate
+
+# DC metadata field to hold computed "lift date" of embargo
+embargo.field.lift = dc.date.embargoenddate
+
+# Duo implementation of EmbargoSetter
+###########
+
+plugin.single.org.dspace.embargo.EmbargoSetter = no.uio.duo.policy.DuoEmbargoSetter
+
+# Add a duo event consumer which will receive Item Install events
+#
+event.dispatcher.default.consumers = versioning, discovery, eperson, duo
+
+# Crosswalk Plugin Configuration:
+#   The purpose of Crosswalks is to translate an external metadata format to/from
+#   the DSpace Internal Metadata format (DIM) or the DSpace Database.
+#   Crosswalks are often used by one or more Packager plugins (see below).
+plugin.named.org.dspace.content.crosswalk.IngestionCrosswalk = \
+  org.dspace.content.crosswalk.AIPDIMCrosswalk = DIM, \
+  org.dspace.content.crosswalk.AIPTechMDCrosswalk = AIP-TECHMD, \
+  org.dspace.content.crosswalk.PREMISCrosswalk = PREMIS, \
+  org.dspace.content.crosswalk.OREIngestionCrosswalk = ore, \
+  org.dspace.content.crosswalk.NullIngestionCrosswalk = NIL, \
+  org.dspace.content.crosswalk.OAIDCIngestionCrosswalk = dc, \
+  org.dspace.content.crosswalk.DIMIngestionCrosswalk = dim, \
+  org.dspace.content.crosswalk.METSRightsCrosswalk = METSRIGHTS, \
+  org.dspace.content.crosswalk.RoleCrosswalk = DSPACE-ROLES, \
+  no.uio.duo.CristinOAIDCCrosswalk = cristin_dc, \
+  no.uio.duo.CristinOREImporter = cristin_ore
+
+plugin.single.org.dspace.sword2.SwordEntryIngester = \
+   org.dspace.sword2.SimpleDCEntryIngester
+
+plugin.single.org.dspace.sword2.SwordEntryDisseminator = \
+	no.uio.duo.DuoEntryDisseminator
+
+swordv2-server.statement.bundles = ORIGINAL, SWORD, SECONDARY, SECONDARY_CLOSED, LICENSE
+
+swordv2-server.metadata.replaceable = dc.title, dc.creator.author, dc.contributor.author, \
+  						dc.description.abstract, dc.language.iso, dc.type, \
+  						fs.uid, fs.subjectcode, fs.subjecttitle, fs.unitcode, \
+  						fs.unitname
