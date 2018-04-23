@@ -290,7 +290,7 @@ public class CristinIngestionWorkflow implements IngestionWorkflow
 
     private List<String> getUnitCodes(Item item)
     {
-        String field = ConfigurationManager.getProperty("cristin", "unitcode.field");
+        String field = ConfigurationManager.getProperty("cristin.unitcode.field");
         List<MetadataValue> dcvs = itemService.getMetadataByMetadataString(item, field);
         List<String> units = new ArrayList<String>();
         for (MetadataValue dcv : dcvs)
