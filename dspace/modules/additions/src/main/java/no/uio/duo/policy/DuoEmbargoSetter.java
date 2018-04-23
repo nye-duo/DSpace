@@ -40,14 +40,18 @@ public class DuoEmbargoSetter implements EmbargoSetter
     /** log4j logger */
     private static Logger log = Logger.getLogger(DuoEmbargoSetter.class);
 
-    private EmbargoSetter fallback;
-    private PolicyPatternManager policies;
+    // private EmbargoSetter fallback;
+    // private PolicyPatternManager policies;
 
     public DuoEmbargoSetter()
     {
+        // this.policies = new PolicyPatternManager();
+    }
+
+    private EmbargoSetter getFallback()
+    {
         PluginService pluginService = CoreServiceFactory.getInstance().getPluginService();
-        this.fallback = (EmbargoSetter) pluginService.getNamedPlugin(EmbargoSetter.class, "fallback");
-        this.policies = new PolicyPatternManager();
+        return (EmbargoSetter) pluginService.getNamedPlugin(EmbargoSetter.class, "fallback");
     }
 
     /**
@@ -65,7 +69,7 @@ public class DuoEmbargoSetter implements EmbargoSetter
     public DCDate parseTerms(Context context, Item item, String s)
             throws SQLException, AuthorizeException
     {
-        return this.fallback.parseTerms(context, item, s);
+        return this.getFallback().parseTerms(context, item, s);
     }
 
     /**
@@ -87,12 +91,13 @@ public class DuoEmbargoSetter implements EmbargoSetter
         if (PolicyApplicationFilter.allow(context, item))
         {
             log.info("Apply policy pattern manager to item " + item.getID());
-            this.policies.applyToNewItem(item, context);
+            PolicyPatternManager ppm = new PolicyPatternManager();
+            ppm.applyToNewItem(item, context);
         }
         else
         {
             log.info("Falling back to standard Embargo Setter for item " + item.getID());
-            this.fallback.setEmbargo(context, item);
+            this.getFallback().setEmbargo(context, item);
         }
     }
 
@@ -113,11 +118,12 @@ public class DuoEmbargoSetter implements EmbargoSetter
     {
         if (PolicyApplicationFilter.allow(context, item))
         {
-            this.policies.applyToExistingItem(item, context);
+            PolicyPatternManager ppm = new PolicyPatternManager();
+            ppm.applyToExistingItem(item, context);
         }
         else
         {
-            this.fallback.checkEmbargo(context, item);
+            this.getFallback().checkEmbargo(context, item);
         }
     }
 
