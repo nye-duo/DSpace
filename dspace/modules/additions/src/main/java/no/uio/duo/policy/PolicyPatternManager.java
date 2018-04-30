@@ -527,7 +527,7 @@ public class PolicyPatternManager
             ResourcePolicy policy = existing.get(i);
 
             // if this is an Admin READ policy
-            if (policy.getGroup().getName().equals(Group.ADMIN) && policy.getAction() == Constants.READ)
+            if (policy.getGroup() != null && policy.getGroup().getName().equals(Group.ADMIN) && policy.getAction() == Constants.READ)
             {
                 idxs.add(i);
                 unwanted.add(policy);
