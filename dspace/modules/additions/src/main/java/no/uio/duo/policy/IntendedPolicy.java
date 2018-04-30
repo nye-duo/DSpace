@@ -13,6 +13,7 @@ import org.dspace.eperson.service.GroupService;
 
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.UUID;
 
 /**
  * Class to represet the Anonymous READ policy that a bitstream is intended to have.  This covers a multitude of possible options:
@@ -78,7 +79,7 @@ public class IntendedPolicy
     {
         if (this.existing != null)
         {
-            if (policy.getID() == this.existing.getID())
+            if (policy.getID().equals(this.existing.getID()))
             {
                 return true;
             }
@@ -91,9 +92,15 @@ public class IntendedPolicy
             Date eed = this.existing.getEndDate();
             boolean ed = (ped == null && eed == null) || (ped != null && ped.equals(eed));
 
+            UUID pid = policy.getGroup() == null ? null : policy.getGroup().getID();
+            UUID eid = this.existing.getGroup() == null ? null : this.existing.getGroup().getID();
+            boolean gid = pid != null ? pid.equals(eid) : eid == null ;
+
+            UUID pepid = policy.getEPerson() == null ? null : policy.getEPerson().getID();
+            UUID eepid = this.existing.getEPerson() == null ? null : this.existing.getEPerson().getID();
+            boolean epid = pepid != null ? pepid.equals(eepid) : eepid == null;
+
             boolean act = policy.getAction() == this.existing.getAction();
-            boolean gid = policy.getGroup().getID() == this.existing.getGroup().getID();
-            boolean epid = policy.getEPerson().getID() == this.existing.getEPerson().getID();
             boolean rid = policy.getdSpaceObject().getID() == this.existing.getdSpaceObject().getID();
 
             return sd && act && ed && gid && epid && rid;
@@ -102,7 +109,7 @@ public class IntendedPolicy
         {
             boolean ed = this.embargo.equals(policy.getStartDate());
             boolean act = policy.getAction() == Constants.READ;
-            boolean gid = policy.getGroup().getName().equals(Group.ANONYMOUS);
+            boolean gid = policy.getGroup() != null && policy.getGroup().getName().equals(Group.ANONYMOUS);
 
             return ed && act && gid;
         }
@@ -110,7 +117,7 @@ public class IntendedPolicy
         {
             boolean ed = policy.getStartDate() == null;
             boolean act = policy.getAction() == Constants.READ;
-            boolean gid = policy.getGroup().getName().equals(Group.ANONYMOUS);
+            boolean gid = policy.getGroup() != null && policy.getGroup().getName().equals(Group.ANONYMOUS);
 
             return ed && act && gid;
         }

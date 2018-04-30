@@ -27,7 +27,7 @@ public class IntendedPolicyExisting implements IntendedPolicyInterface
         ResourcePolicy anonRead = null;
         for (ResourcePolicy policy : existing)
         {
-            if (policy.getGroup().getName().equals(Group.ANONYMOUS) && policy.getAction() == Constants.READ)
+            if (policy.getGroup() != null && policy.getGroup().getName().equals(Group.ANONYMOUS) && policy.getAction() == Constants.READ)
             {
                 anonRead = policy;
                 break;
