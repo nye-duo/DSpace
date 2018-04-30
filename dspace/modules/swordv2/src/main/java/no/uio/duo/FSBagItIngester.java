@@ -222,9 +222,15 @@ public class FSBagItIngester extends AbstractSwordContentIngester
             Bundle admin = this.getBundle(context, item, DuoConstants.ADMIN_BUNDLE);
 
             // empty all of the bundles (no versioning)
-            this.emptyBundle(original);
-            this.emptyBundle(secondary);
-            this.emptyBundle(admin);
+            if (original != null) {
+                this.emptyBundle(original);
+            }
+            if (secondary != null) {
+                this.emptyBundle(secondary);
+            }
+            if (admin != null) {
+                this.emptyBundle(admin);
+            }
 
             // populate each bundle from the bag
 
@@ -308,7 +314,7 @@ public class FSBagItIngester extends AbstractSwordContentIngester
         else
         {
             BundleService bundleService = ContentServiceFactory.getInstance().getBundleService();
-            bundleService.create(context, item, name);
+            bundle = bundleService.create(context, item, name);
         }
 
         return bundle;
