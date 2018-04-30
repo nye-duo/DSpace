@@ -1,10 +1,15 @@
 package no.uio.duo.policy;
 
+import org.apache.log4j.Logger;
+import org.dspace.authorize.AuthorizeException;
 import org.dspace.content.DSpaceObject;
 import org.dspace.content.Item;
 import org.dspace.core.Context;
 import org.dspace.curate.AbstractCurationTask;
 import org.dspace.curate.Curator;
+import org.dspace.eperson.EPerson;
+import org.dspace.eperson.factory.EPersonServiceFactory;
+import org.dspace.eperson.service.EPersonService;
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -15,6 +20,9 @@ import java.sql.SQLException;
  */
 public class DuoPolicyCurationTask extends AbstractCurationTask
 {
+    // The log4j logger for this class
+    private static Logger log = Logger.getLogger(DuoPolicyCurationTask.class);
+
     /**
      * Execute the {@link PolicyPatternManager} over the given DSpace Object
      *
@@ -35,12 +43,13 @@ public class DuoPolicyCurationTask extends AbstractCurationTask
 
         Item item = (Item) dso;
 
-        // we haven't been given a context, so make our own one
-        Context context = new Context();
-
+        Context context = null;
         boolean error = false;
         try
         {
+            context = Curator.curationContext();
+            this.setupEPerson(context);
+
             // The results that we'll return
             StringBuilder results = new StringBuilder();
 
@@ -52,27 +61,46 @@ public class DuoPolicyCurationTask extends AbstractCurationTask
         }
         catch (Exception e)
         {
-            context.abort();
+            if (log.isDebugEnabled())
+            {
+                log.debug(e.getMessage());
+            }
             error = true;
-        }
-        finally
-        {
-            try
-            {
-                context.complete();
-            }
-            catch (SQLException e)
-            {
-                context.abort();
-                error = true;
-            }
         }
 
         if (error)
         {
+            if (context != null) {
+                context.abort();
+            }
             return Curator.CURATE_ERROR;
         }
 
         return Curator.CURATE_SUCCESS;
     }
+
+    private void setupEPerson(Context context)
+            throws SQLException, IOException, AuthorizeException
+    {
+        EPerson ePerson = context.getCurrentUser();
+
+        // ugly eperson verification/acquisition/error bit
+        if (ePerson == null)
+        {
+            EPersonService ePersonService = EPersonServiceFactory.getInstance().getEPersonService();
+            String adminEperson = configurationService.getProperty("duopolicy.admin.eperson");
+            ePerson = ePersonService.findByEmail(context, adminEperson);
+            if (ePerson == null)
+            {
+                ePerson = ePersonService.findByNetid(context, adminEperson);
+            }
+        }
+        if (ePerson == null)
+        {
+            throw new AuthorizeException("No admin eperson defined in duopolicy.admin.eperson, and is required for context of the call - probably need to fix your config");
+        }
+
+        context.setCurrentUser(ePerson);
+    }
+
 }
