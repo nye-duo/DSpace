@@ -38,8 +38,14 @@ plugin.named.org.dspace.content.crosswalk.IngestionCrosswalk = \
   no.uio.duo.CristinOAIDCCrosswalk = cristin_dc, \
   no.uio.duo.CristinOREImporter = cristin_ore
 
+plugin.named.org.dspace.sword2.SwordContentIngester = \
+  org.dspace.sword2.SimpleZipContentIngester = http://purl.org/net/sword/package/SimpleZip, \
+  org.dspace.sword2.SwordMETSContentIngester = http://purl.org/net/sword/package/METSDSpaceSIP, \
+  org.dspace.sword2.BinaryContentIngester = http://purl.org/net/sword/package/Binary, \
+  no.uio.duo.FSBagItIngester = http://duo.uio.no/terms/package/FSBagIt
+
 plugin.single.org.dspace.sword2.SwordEntryIngester = \
-   org.dspace.sword2.SimpleDCEntryIngester
+	no.uio.duo.FSEntryIngester
 
 plugin.single.org.dspace.sword2.SwordEntryDisseminator = \
 	no.uio.duo.DuoEntryDisseminator

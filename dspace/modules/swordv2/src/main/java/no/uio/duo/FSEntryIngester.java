@@ -192,7 +192,7 @@ public class FSEntryIngester implements SwordEntryIngester
         String gradeField = ConfigurationManager.getProperty("studentweb.grade.field");
         if (gradeField == null || "".equals(gradeField))
         {
-            throw new DuoException("No configuration, or configuration is invalid for: studentweb:grade.field");
+            throw new DuoException("No configuration, or configuration is invalid for: studentweb.grade.field");
         }
         this.addFieldToItem(context, se.getEntry(), item, DuoConstants.GRADE_QNAME, gradeField);
 
