@@ -148,6 +148,7 @@ public class LiveMetadataModifyTest extends LiveTest
         this.context.setCurrentUser(this.eperson);
 
         this.collection = this.makeCollection();
+        this.collection = this.context.reloadEntity(this.collection);
 
         System.out.println("===========================================");
         System.out.println("== Startup complete                      ==");
@@ -202,6 +203,8 @@ public class LiveMetadataModifyTest extends LiveTest
                     record.get("duo.state_restrictions")
             );
         }
+
+        this.context.complete();
 
         System.out.println("===========================================");
         System.out.println("== All Tests complete                    ==");
@@ -411,7 +414,7 @@ public class LiveMetadataModifyTest extends LiveTest
         }
 
         itemService.update(context, item);
-        this.context.commit();
+        // this.context.commit();
 
         System.out.println("Created item with id " + item.getID());
 

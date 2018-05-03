@@ -6,6 +6,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
+import org.dspace.content.Collection;
 import org.dspace.content.Item;
 import org.dspace.content.WorkspaceItem;
 import org.dspace.content.factory.ContentServiceFactory;
@@ -46,7 +47,8 @@ public class LiveMetadataCleanupTest extends LiveTest
             throws Exception
     {
         super(epersonEmail);
-        this.collection = this.makeCollection();
+        Collection theCollection = this.makeCollection();
+        this.collection = this.context.reloadEntity(theCollection);
     }
 
     /**
@@ -88,7 +90,7 @@ public class LiveMetadataCleanupTest extends LiveTest
         itemService.addMetadata(context, item, "dc", "description", "abstract", null, "This abstract also has <br> <html> in it </div>");
 
         itemService.update(context, item);
-        this.context.commit();
+        // this.context.commit();
 
         return item;
     }

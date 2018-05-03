@@ -92,7 +92,7 @@ public class LiveTest
             throws Exception
     {
         // commit the context, and record the references to the before and after items
-        this.context.commit();
+        // this.context.commit();
         System.out.println("-- Finished test " + name);
         System.out.println("\n");
     }
@@ -258,5 +258,17 @@ public class LiveTest
         }
 
         return date;
+    }
+
+    protected boolean timeNear(Date source, Date target)
+    {
+        long sourceMillis = source.getTime();
+        long targetMillis = target.getTime();
+
+        long tolerance = 86400000;
+        long diff = sourceMillis - targetMillis;
+
+        diff = Math.abs(diff);
+        return diff < tolerance;
     }
 }

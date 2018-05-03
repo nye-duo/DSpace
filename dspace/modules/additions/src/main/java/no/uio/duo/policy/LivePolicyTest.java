@@ -18,6 +18,7 @@ import org.dspace.authorize.factory.AuthorizeServiceFactory;
 import org.dspace.authorize.service.AuthorizeService;
 import org.dspace.authorize.service.ResourcePolicyService;
 import org.dspace.content.*;
+import org.dspace.content.Collection;
 import org.dspace.content.factory.ContentServiceFactory;
 import org.dspace.content.service.BitstreamService;
 import org.dspace.content.service.ItemService;
@@ -160,7 +161,9 @@ public class LivePolicyTest extends LiveTest
         this.eperson = ePersonService.findByEmail(this.context, epersonEmail);
         this.context.setCurrentUser(this.eperson);
 
-        this.collection = this.makeCollection();
+        // make the collection, and then re-load it into the current context (hibernate nonsense)
+        Collection theCollection = this.makeCollection();
+        this.collection = this.context.reloadEntity(theCollection);
 
         this.policyManager = new PolicyPatternManager();
 
@@ -233,6 +236,8 @@ public class LivePolicyTest extends LiveTest
             );
         }
 
+        this.context.complete();
+
         System.out.println("===========================================");
         System.out.println("== All Tests complete                    ==");
         System.out.println("===========================================");
@@ -300,6 +305,10 @@ public class LivePolicyTest extends LiveTest
         this.record(name, reference.item, actOn.item);
 
         this.testEnd(name);
+
+        // make sure the results are written to the database
+        this.context.commit();
+        this.collection = this.context.reloadEntity(this.collection);
     }
 
     private void checkAndPrint(String testName, Item item, Map<UUID, String> anonReadResults, String metadataResult,
@@ -358,6 +367,7 @@ public class LivePolicyTest extends LiveTest
         // make the item in the collection
         WorkspaceItemService workspaceItemService = ContentServiceFactory.getInstance().getWorkspaceItemService();
         WorkspaceItem wsi = workspaceItemService.create(this.context, this.collection, false);
+        workspaceItemService.update(context, wsi);
         Item item = wsi.getItem();
 
         ItemService itemService = ContentServiceFactory.getInstance().getItemService();
@@ -515,7 +525,8 @@ public class LivePolicyTest extends LiveTest
         }
 
         itemService.update(context, item);
-        this.context.commit();
+        // don't commit, as this may mess up the hibernate session
+        // this.context.commit();
 
         System.out.println("Created item with id " + item.getID());
 
@@ -630,7 +641,7 @@ public class LivePolicyTest extends LiveTest
                     {
                         return "Bitstream " + bitstream.getName() + " in ORIGINAL bundle has a start date, but it should be in the future";
                     }
-                    else if (!start.equals(this.farFuture))
+                    else if (!this.timeNear(start, this.farFuture))
                     {
                         return "Bitstream " + bitstream.getName() + " in ORIGINAL bundle has a start date in the near future (" + start.getTime() + "), but it should be in the far future (" + this.farFuture.getTime() + ")";
                     }
