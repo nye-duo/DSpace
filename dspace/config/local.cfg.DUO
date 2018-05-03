@@ -1,5 +1,5 @@
 ###########################
-# Other Configuration
+# Configuration that should be localised for DUO
 ###########################
 
 # Embargo details.
@@ -38,6 +38,9 @@ plugin.named.org.dspace.content.crosswalk.IngestionCrosswalk = \
   no.uio.duo.CristinOAIDCCrosswalk = cristin_dc, \
   no.uio.duo.CristinOREImporter = cristin_ore
 
+# SWORDv2 plugins and settings
+######
+
 plugin.named.org.dspace.sword2.SwordContentIngester = \
   org.dspace.sword2.SimpleZipContentIngester = http://purl.org/net/sword/package/SimpleZip, \
   org.dspace.sword2.SwordMETSContentIngester = http://purl.org/net/sword/package/METSDSpaceSIP, \
@@ -56,3 +59,17 @@ swordv2-server.metadata.replaceable = dc.title, dc.creator.author, dc.contributo
   						dc.description.abstract, dc.language.iso, dc.type, \
   						fs.uid, fs.subjectcode, fs.subjecttitle, fs.unitcode, \
   						fs.unitname
+
+# Duo specific config that will need to be localised to this install
+########
+
+# if the harvester is called in an asynchronous context (such as
+# via the scheduler), use this eperson as the acting user.  This should
+# be someone with sufficient rights to carry out the harvesting actions
+# (so, probably an administrator)
+#
+oai.admin.eperson = richard
+
+# When the curation task is called, which user to operate as
+#
+duopolicy.admin.eperson = richard
