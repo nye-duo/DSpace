@@ -58,7 +58,7 @@ public class WorkflowManagerWrapper
     public static void start(Context context, WorkspaceItem wsItem)
             throws SQLException, AuthorizeException, IOException, WorkflowException, WorkflowConfigurationException, MessagingException
     {
-        if (ConfigurationManager.getProperty("workflow.workflow.framework").equals("xmlworkflow"))
+        if (ConfigurationManager.getProperty("duo.workflowmanagerwrapper").equals("xmlworkflow"))
         {
             XmlWorkflowService xmlWorkflowService = XmlWorkflowServiceFactory.getInstance().getXmlWorkflowService();
             xmlWorkflowService.start(context, wsItem);
@@ -90,7 +90,7 @@ public class WorkflowManagerWrapper
     public static void startWithoutNotify(Context context, WorkspaceItem wsItem)
             throws SQLException, AuthorizeException, IOException, WorkflowException, WorkflowConfigurationException, MessagingException
     {
-        if (ConfigurationManager.getProperty("workflow.workflow.framework").equals("xmlworkflow"))
+        if (ConfigurationManager.getProperty("duo.workflowmanagerwrapper").equals("xmlworkflow"))
         {
             XmlWorkflowService xmlWorkflowService = XmlWorkflowServiceFactory.getInstance().getXmlWorkflowService();
             xmlWorkflowService.startWithoutNotify(context, wsItem);
@@ -139,7 +139,7 @@ public class WorkflowManagerWrapper
             throw new WorkflowException("No admin eperson defined, and passed eperson is null - probably need to fix your config");
         }
 
-        if (ConfigurationManager.getProperty("workflow.workflow.framework").equals("xmlworkflow"))
+        if (ConfigurationManager.getProperty("duo.workflowmanagerwrapper").equals("xmlworkflow"))
         {
             XmlWorkflowService xmlWorkflowService = XmlWorkflowServiceFactory.getInstance().getXmlWorkflowService();
             xmlWorkflowService.sendWorkflowItemBackSubmission(context, (XmlWorkflowItem) wfItem, ePerson, "", "");
@@ -256,7 +256,7 @@ public class WorkflowManagerWrapper
     public static boolean isItemInWorkflow(Context context, Item item)
             throws SQLException
     {
-        if (ConfigurationManager.getProperty("workflow.workflow.framework").equals("xmlworkflow"))
+        if (ConfigurationManager.getProperty("duo.workflowmanagerwrapper").equals("xmlworkflow"))
         {
             return WorkflowManagerWrapper.isItemInXmlWorkflow(context, item);
         }
@@ -381,7 +381,7 @@ public class WorkflowManagerWrapper
     public static InProgressSubmission getWorkflowItem(Context context, Item item)
             throws SQLException, AuthorizeException, IOException
     {
-        if (ConfigurationManager.getProperty("workflow.workflow.framework").equals("xmlworkflow"))
+        if (ConfigurationManager.getProperty("duo.workflowmanagerwrapper").equals("xmlworkflow"))
         {
             return WorkflowManagerWrapper.getXmlWorkflowItem(context, item);
         }

@@ -1,11 +1,12 @@
-package no.uio.duo.policy;
+package no.uio.duo.livetest;
 
 import no.uio.duo.BitstreamIterator;
 // import no.uio.duo.DuoState;
 import no.uio.duo.MetadataFieldRepresentation;
 import no.uio.duo.MetadataManager;
 import no.uio.duo.WorkflowManagerWrapper;
-import no.uio.duo.livetest.LiveTest;
+import no.uio.duo.policy.ContextualBitstream;
+import no.uio.duo.policy.PolicyPatternManager;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
