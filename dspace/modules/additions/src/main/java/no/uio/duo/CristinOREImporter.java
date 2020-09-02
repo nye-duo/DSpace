@@ -453,11 +453,7 @@ public class CristinOREImporter implements IngestionCrosswalk, OAIConfigurableCr
             ItemService itemService = ContentServiceFactory.getInstance().getItemService();
             itemService.update(context, item);
         }
-        catch (JDOMException e)
-        {
-            throw new CrosswalkException(e);
-        }
-        catch (CrosswalkException e)
+        catch (JDOMException | CrosswalkException e)
         {
             throw new CrosswalkException(e);
         }

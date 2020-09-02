@@ -148,7 +148,7 @@ public class XmlUIBitstreamReorder extends ProcessingAction
 
             BundleService bundleService = ContentServiceFactory.getInstance().getBundleService();
 
-            if (newBitstreamOrder != null)
+            if (newBitstreamOrder.length > 0)
             {
                 //Set the new order in our bundle !
                 bundleService.setOrder(context, bundle, newBitstreamOrder);
