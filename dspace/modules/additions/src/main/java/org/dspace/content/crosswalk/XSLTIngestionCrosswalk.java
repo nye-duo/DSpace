@@ -7,6 +7,14 @@
  */
 package org.dspace.content.crosswalk;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Iterator;
+import java.util.List;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.log4j.Logger;
 import org.dspace.authorize.AuthorizeException;
@@ -28,13 +36,6 @@ import org.jdom.output.XMLOutputter;
 import org.jdom.transform.JDOMResult;
 import org.jdom.transform.JDOMSource;
 
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.Iterator;
-import java.util.List;
 
 /**
  * Configurable XSLT-driven ingestion Crosswalk
