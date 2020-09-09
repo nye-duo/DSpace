@@ -47,7 +47,7 @@ import java.util.*;
  * <p>Install this in your test DSpace, then run the main method of the class, and it will execute a suite
  * of tests.  The DSpace will not be in a clean state after.</p>
  */
-public class LivePolicyTest extends LiveTest
+public class LivePolicyPatternTest extends LiveTest
 {
     public static void main(String[] args)
             throws Exception
@@ -92,7 +92,7 @@ public class LivePolicyTest extends LiveTest
 
         boolean workspace = line.hasOption("w");
 
-        LivePolicyTest lpt = new LivePolicyTest(line.getOptionValue("e"), line.getOptionValue("b"), line.getOptionValue("u"), line.getOptionValue("m"), line.getOptionValue("o"), workspace);
+        LivePolicyPatternTest lpt = new LivePolicyPatternTest(line.getOptionValue("e"), line.getOptionValue("b"), line.getOptionValue("u"), line.getOptionValue("m"), line.getOptionValue("o"), workspace);
 
         if (line.hasOption("-t"))
         {
@@ -121,7 +121,7 @@ public class LivePolicyTest extends LiveTest
     private Date nearFuture = new Date(3153600000000L);
     private Date farFuture = new Date(31535996400000L);     // has to be set to this specific date, because of rounding oddities in the java Date library
 
-    public LivePolicyTest(String epersonEmail, String bitstreamPath, String baseUrl, String matrixPath, String outPath, boolean workspace)
+    public LivePolicyPatternTest(String epersonEmail, String bitstreamPath, String baseUrl, String matrixPath, String outPath, boolean workspace)
             throws Exception
     {
         super(epersonEmail);

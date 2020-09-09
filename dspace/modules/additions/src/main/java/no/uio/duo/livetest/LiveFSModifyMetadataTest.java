@@ -9,6 +9,7 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+import org.apache.log4j.Logger;
 import org.dspace.authorize.ResourcePolicy;
 import org.dspace.authorize.factory.AuthorizeServiceFactory;
 import org.dspace.authorize.service.AuthorizeService;
@@ -29,8 +30,11 @@ import java.util.*;
  * Class which can apply a live test to ensure that the DuoEventConsumer is behaving correctly
  *
  */
-public class LiveInstallTest extends LiveTest
+public class LiveFSModifyMetadataTest extends LiveTest
 {
+    /** log4j logger */
+    private static Logger log = Logger.getLogger(LiveFSModifyMetadataTest.class);
+
     public static void main(String[] args)
             throws Exception
     {
@@ -71,7 +75,7 @@ public class LiveInstallTest extends LiveTest
             System.exit(0);
         }
 
-        LiveInstallTest lit = new LiveInstallTest(line.getOptionValue("e"), line.getOptionValue("b"), line.getOptionValue("u"), line.getOptionValue("m"), line.getOptionValue("o"));
+        LiveFSModifyMetadataTest lit = new LiveFSModifyMetadataTest(line.getOptionValue("e"), line.getOptionValue("b"), line.getOptionValue("u"), line.getOptionValue("m"), line.getOptionValue("o"));
 
         if (line.hasOption("-t"))
         {
@@ -102,7 +106,7 @@ public class LiveInstallTest extends LiveTest
      * @param epersonEmail
      * @throws Exception
      */
-    public LiveInstallTest(String epersonEmail, String bitstreamPath, String baseUrl, String matrixPath, String outPath)
+    public LiveFSModifyMetadataTest(String epersonEmail, String bitstreamPath, String baseUrl, String matrixPath, String outPath)
             throws Exception
     {
         super(epersonEmail);
@@ -118,9 +122,12 @@ public class LiveInstallTest extends LiveTest
         Reader in = new FileReader(matrixPath);
         CSVParser csv = CSVFormat.DEFAULT.withHeader(
                 "name",
-                "grade",
-                "embargo",
-                "type",
+                "initial_grade",
+                "initial_embargo",
+                "initial_type",
+                "modify_grade",
+                "modify_embargo",
+                "modify_type",
                 "result_status",
                 "original_files",
                 "admin_files",
@@ -179,9 +186,12 @@ public class LiveInstallTest extends LiveTest
 
             this.runTest(
                     record.get("name"),
-                    record.get("grade"),
-                    record.get("embargo"),
-                    record.get("type"),
+                    record.get("initial_grade"),
+                    record.get("initial_embargo"),
+                    record.get("initial_type"),
+                    record.get("modify_grade"),
+                    record.get("modify_embargo"),
+                    record.get("modify_type"),
                     record.get("result_status"),
                     Integer.parseInt(record.get("original_files")),
                     Integer.parseInt(record.get("admin_files")),
@@ -218,23 +228,13 @@ public class LiveInstallTest extends LiveTest
     /////////////////////////////////////////////////
     // test running infrastructure
 
-    /**
-     * Run an individual test, with the given parameters
-     *
-     * @param name
-     * @param grade
-     * @param embargo
-     * @param embargoType
-     * @param resultStatus
-     * @param originalFiles
-     * @param adminFiles
-     * @param anonReadResult
-     * @throws Exception
-     */
     private void runTest(String name,
-                         String grade,
-                         String embargo,
-                         String embargoType,
+                         String initialGrade,
+                         String initialEmbargo,
+                         String initialEmbargoType,
+                         String modifyGrade,
+                         String modifyEmbargo,
+                         String modifyEmbargoType,
                          String resultStatus,
                          int originalFiles,
                          int adminFiles,
@@ -252,74 +252,58 @@ public class LiveInstallTest extends LiveTest
         // create two items
 
         // the first is the reference, it is in the submission state in the workflow
-        ItemMakeRecord workflow = this.makeItem(grade, embargo, embargoType, "workspace");
+        ItemMakeRecord reference = this.makeItem(initialGrade, initialEmbargo, initialEmbargoType, "archive");
+        log.info("Created reference object: " + reference.item.getID());
 
         // the second is the item in the archive, which will get processed by the install consumer
-        ItemMakeRecord archived = this.makeItem(grade, embargo, embargoType, "archive");
+        ItemMakeRecord actOn = this.makeItem(initialGrade, initialEmbargo, initialEmbargoType, "archive");
+        log.info("Created action object: " + actOn.item.getID());
 
         // make a map from bitstream id to expected anonRead results
         Map<UUID, String> readMap = new HashMap<UUID, String>();
-        for (int i = 0; i < archived.bitstreamIDs.size(); i++)
+        for (int i = 0; i < actOn.bitstreamIDs.size(); i++)
         {
-            readMap.put(archived.bitstreamIDs.get(i), anonReadResult);
+            readMap.put(actOn.bitstreamIDs.get(i), anonReadResult);
         }
 
-        // check the item for appropriate policies
-        this.checkAndPrint(name, archived.item, readMap, resultStatus, originalFiles, adminFiles, stateInstalled, stateState, stateGrade, stateEmbargo, stateRestrictions);
+        // now apply the modification
+        ItemService itemService = ContentServiceFactory.getInstance().getItemService();
+        this.applyMetadata(actOn.item, modifyGrade, modifyEmbargo, modifyEmbargoType);
+        itemService.update(context, actOn.item);
+        this.context.commit();
+        log.info("Applied new metadata to item: " + actOn.item.getID());
 
-        this.record(name, workflow.item, archived.item);
+        // check the item for appropriate policies
+        this.checkAndPrint(name, actOn.item, readMap, resultStatus, originalFiles, adminFiles, stateInstalled, stateState, stateGrade, stateEmbargo, stateRestrictions);
+
+        this.record(name, reference.item, actOn.item);
 
         this.testEnd(name);
     }
 
-    private void checkAndPrint(String testName, Item item, Map<UUID, String> anonReadResults, String resultStatus, int originalFiles, int adminFiles,
-                               String stateInstalled,
-                               String stateState,
-                               String stateGrade,
-                               String stateEmbargo,
-                               String stateRestrictions)
+    private void applyMetadata(Item item, String grade, String embargo, String embargoType)
             throws Exception
     {
-        String error = this.checkItem(item, anonReadResults, resultStatus, originalFiles, adminFiles, stateInstalled, stateState, stateGrade, stateEmbargo, stateRestrictions);
-        if (error != null)
-        {
-            Map<String, String> errorRecord = new HashMap<String, String>();
-            errorRecord.put(testName, error);
-            this.failures.add(errorRecord);
-
-            System.out.println("ASSERTION ERROR");
-            System.out.println(error);
-        }
-        else
-        {
-            System.out.println("Automated checks passed");
-        }
-    }
-
-    private ItemMakeRecord makeItem(String grade, String embargo, String embargoType, String state)
-            throws Exception
-    {
-        // make and print the information string
-        System.out.println("Making test item with Grade:" + grade + "; Embargo: " + embargo + "; Embargo Type: " + embargoType + "; State: " + state);
-
-        ItemMakeRecord result = new ItemMakeRecord();
-
-        // make the item in the collection
-        WorkspaceItemService workspaceItemService = ContentServiceFactory.getInstance().getWorkspaceItemService();
-        WorkspaceItem wsi = workspaceItemService.create(this.context, this.collection, false);
-        Item item = wsi.getItem();
-
         MetadataManager mm = new MetadataManager();
-
-        // set a convenient title
         ItemService itemService = ContentServiceFactory.getInstance().getItemService();
-        itemService.addMetadata(context, item, "dc", "title", null, null, "Item ID " + item.getID());
+
+        String gradeField = ConfigurationManager.getProperty("studentweb.grade.field");
+        MetadataFieldRepresentation gradeDcv = mm.makeDCValue(gradeField, null);
+
+        String embargoField = ConfigurationManager.getProperty("embargo.field.terms");
+        MetadataFieldRepresentation embargoDcv = mm.makeDCValue(embargoField, null);
+
+        String typeField = ConfigurationManager.getProperty("studentweb.embargo-type.field");
+        MetadataFieldRepresentation typeDcv = mm.makeDCValue(typeField, null);
+
+        // clear any old metadata
+        itemService.clearMetadata(context, item, gradeDcv.schema, gradeDcv.element, gradeDcv.qualifier, null);
+        itemService.clearMetadata(context, item, embargoDcv.schema, embargoDcv.element, embargoDcv.qualifier, null);
+        itemService.clearMetadata(context, item, typeDcv.schema, typeDcv.element, typeDcv.qualifier, null);
 
         // set the grade
         if (!"none".equals(grade))
         {
-            String gradeField = ConfigurationManager.getProperty("studentweb.grade.field");
-            MetadataFieldRepresentation gradeDcv = mm.makeDCValue(gradeField, null);
             itemService.addMetadata(context, item, gradeDcv.schema, gradeDcv.element, gradeDcv.qualifier, null, grade);
         }
 
@@ -358,18 +342,63 @@ public class LiveInstallTest extends LiveTest
 
         if (ed != null)
         {
-            String embargoField = ConfigurationManager.getProperty("embargo.field.terms");
-            MetadataFieldRepresentation embargoDcv = mm.makeDCValue(embargoField, null);
             itemService.addMetadata(context, item, embargoDcv.schema, embargoDcv.element, embargoDcv.qualifier, null, ed);
         }
 
         // add the embargo type
         if (!"none".equals(embargoType))
         {
-            String typeField = ConfigurationManager.getProperty("studentweb.embargo-type.field");
-            MetadataFieldRepresentation typeDcv = mm.makeDCValue(typeField, null);
             itemService.addMetadata(context, item, typeDcv.schema, typeDcv.element, typeDcv.qualifier, null, embargoType);
         }
+    }
+
+    private void checkAndPrint(String testName, Item item, Map<UUID, String> anonReadResults, String resultStatus, int originalFiles, int adminFiles,
+                               String stateInstalled,
+                               String stateState,
+                               String stateGrade,
+                               String stateEmbargo,
+                               String stateRestrictions)
+            throws Exception
+    {
+        String error = this.checkItem(item, anonReadResults, resultStatus, originalFiles, adminFiles, stateInstalled, stateState, stateGrade, stateEmbargo, stateRestrictions);
+        if (error != null)
+        {
+            Map<String, String> errorRecord = new HashMap<String, String>();
+            errorRecord.put(testName, error);
+            this.failures.add(errorRecord);
+
+            System.out.println("ASSERTION ERROR");
+            System.out.println(error);
+        }
+        else
+        {
+            System.out.println("Automated checks passed");
+        }
+    }
+
+    protected void record(String name, Item reference, Item actOn)
+    {
+        CheckReport report = new CheckReport();
+        report.testName = name;
+        report.referenceHandle = reference.getHandle();
+        report.changedHandle = actOn.getHandle();
+        this.checkList.add(report);
+    }
+
+    private ItemMakeRecord makeItem(String grade, String embargo, String embargoType, String state)
+            throws Exception
+    {
+        // make and print the information string
+        System.out.println("Making test item with Grade:" + grade + "; Embargo: " + embargo + "; Embargo Type: " + embargoType + "; State: " + state);
+
+        ItemMakeRecord result = new ItemMakeRecord();
+
+        // make the item in the collection
+        WorkspaceItemService workspaceItemService = ContentServiceFactory.getInstance().getWorkspaceItemService();
+        WorkspaceItem wsi = workspaceItemService.create(this.context, this.collection, false);
+        Item item = wsi.getItem();
+
+        this.applyMetadata(item, grade, embargo, embargoType);
 
         // add a bitstream to the item
         List<Bitstream> originals = new ArrayList<Bitstream>();
@@ -377,9 +406,7 @@ public class LiveInstallTest extends LiveTest
         originals.add(original);
         result.bitstreamIDs.add(original.getID());
 
-        // clear out any existing resource policies
-        // this.clearResourcePolicies(item);
-
+        ItemService itemService = ContentServiceFactory.getInstance().getItemService();
         if ("archive".equals(state))
         {
             WorkflowManagerWrapper.startWithoutNotify(this.context, wsi);
@@ -393,6 +420,25 @@ public class LiveInstallTest extends LiveTest
 
         result.item = item;
         return result;
+    }
+
+    protected void outputCheckList()
+            throws Exception
+    {
+        String csv = "Test Name,Reference Item,Affected Item";
+        for (CheckReport report : this.checkList)
+        {
+            String reference = this.baseUrl + "/handle/" + report.referenceHandle;
+            String changed = this.baseUrl + "/handle/" + report.changedHandle;
+            String row = report.testName + "," + reference + "," + changed;
+            System.out.println(row);
+            csv += "\n" + row;
+        }
+
+        Writer out = new FileWriter(this.outPath);
+        out.write(csv);
+        out.flush();
+        out.close();
     }
 
     private String checkItem(Item item, Map<UUID, String> anonReadResults, String resultStatus, int originalFiles, int adminFiles,
@@ -487,8 +533,8 @@ public class LiveInstallTest extends LiveTest
         }
 
         /*
-        * state is disabled for now, do not check
-        *
+         * state is disabled for now, do not check
+         *
         // check the duo state metadata to ensure it matches up
         DuoState ds = new DuoState(item);
 
@@ -550,7 +596,6 @@ public class LiveInstallTest extends LiveTest
                 return "Item should have duo.state grade=fail, but has grade=" + ds.getGrade();
             }
         }
-
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         String seds = ds.getEmbargo();
@@ -640,5 +685,4 @@ public class LiveInstallTest extends LiveTest
 
         return null;
     }
-
 }

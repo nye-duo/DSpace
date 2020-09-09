@@ -25,7 +25,7 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class LiveReinstateTest extends LiveTest
+public class LiveFSReinstateTest extends LiveTest
 {
     public static void main(String[] args)
             throws Exception
@@ -67,7 +67,7 @@ public class LiveReinstateTest extends LiveTest
             System.exit(0);
         }
 
-        LiveReinstateTest lrt = new LiveReinstateTest(line.getOptionValue("e"), line.getOptionValue("b"), line.getOptionValue("u"), line.getOptionValue("m"), line.getOptionValue("o"));
+        LiveFSReinstateTest lrt = new LiveFSReinstateTest(line.getOptionValue("e"), line.getOptionValue("b"), line.getOptionValue("u"), line.getOptionValue("m"), line.getOptionValue("o"));
 
         if (line.hasOption("-t"))
         {
@@ -98,7 +98,7 @@ public class LiveReinstateTest extends LiveTest
      * @param epersonEmail
      * @throws Exception
      */
-    public LiveReinstateTest(String epersonEmail, String bitstreamPath, String baseUrl, String matrixPath, String outPath)
+    public LiveFSReinstateTest(String epersonEmail, String bitstreamPath, String baseUrl, String matrixPath, String outPath)
             throws Exception
     {
         super(epersonEmail);
