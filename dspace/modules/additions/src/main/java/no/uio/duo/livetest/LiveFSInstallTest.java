@@ -387,7 +387,9 @@ public class LiveFSInstallTest extends LiveTest
         }
 
         itemService.update(context, item);
-        // this.context.commit();
+        this.context.commit();
+        this.collection = this.context.reloadEntity(this.collection);
+        this.eperson = this.context.reloadEntity(this.eperson);
 
         System.out.println("Created item with id " + item.getID());
 

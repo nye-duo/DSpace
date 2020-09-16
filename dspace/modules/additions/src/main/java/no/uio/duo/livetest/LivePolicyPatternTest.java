@@ -279,6 +279,7 @@ public class LivePolicyPatternTest extends LiveTest
         this.testStart(name);
 
         // prep the reference and action item
+        //
         String state = this.workspaceMode ? "workspace" : "archive";
         ItemMakeRecord reference = this.makeItem(embargoDate, anonReads, adminFile, adminRead, state);
         ItemMakeRecord actOn = this.makeItem(embargoDate, anonReads, adminFile, adminRead, "archive");
@@ -527,7 +528,9 @@ public class LivePolicyPatternTest extends LiveTest
 
         itemService.update(context, item);
         // don't commit, as this may mess up the hibernate session
-        // this.context.commit();
+        this.context.commit();
+        this.collection = this.context.reloadEntity(this.collection);
+        this.eperson = this.context.reloadEntity(this.eperson);
 
         System.out.println("Created item with id " + item.getID());
 

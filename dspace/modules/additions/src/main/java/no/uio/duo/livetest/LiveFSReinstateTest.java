@@ -266,6 +266,10 @@ public class LiveFSReinstateTest extends LiveTest
         itemService.update(context, archived.item);
         this.context.commit();
 
+        this.collection = this.context.reloadEntity(this.collection);
+        this.eperson = this.context.reloadEntity(this.eperson);
+        archived.item = this.context.reloadEntity(archived.item);
+
         // check the item for appropriate policies
         this.checkAndPrint(name, archived.item, readMap, resultStatus, originalFiles, adminFiles, stateInstalled, stateState, stateGrade, stateEmbargo, stateRestrictions);
 
@@ -335,11 +339,13 @@ public class LiveFSReinstateTest extends LiveTest
         }
 
         itemService.update(context, item);
-        // this.context.commit();
+        this.context.commit();
+        this.collection = this.context.reloadEntity(this.collection);
+        this.eperson = this.context.reloadEntity(this.eperson);
 
         System.out.println("Created item with id " + item.getID());
 
-        result.item = item;
+        result.item = this.context.reloadEntity(item);
         return result;
     }
 

@@ -271,6 +271,8 @@ public class LiveFSModifyMetadataTest extends LiveTest
         this.applyMetadata(actOn.item, modifyGrade, modifyEmbargo, modifyEmbargoType);
         itemService.update(context, actOn.item);
         this.context.commit();
+        this.collection = this.context.reloadEntity(this.collection);
+        this.eperson = this.context.reloadEntity(this.eperson);
         log.info("Applied new metadata to item: " + actOn.item.getID());
 
         // check the item for appropriate policies
@@ -414,11 +416,13 @@ public class LiveFSModifyMetadataTest extends LiveTest
         }
 
         itemService.update(context, item);
-        // this.context.commit();
+        this.context.commit();
+        this.collection = this.context.reloadEntity(this.collection);
+        this.eperson = this.context.reloadEntity(this.eperson);
 
         System.out.println("Created item with id " + item.getID());
 
-        result.item = item;
+        result.item = this.context.reloadEntity(item);
         return result;
     }
 
