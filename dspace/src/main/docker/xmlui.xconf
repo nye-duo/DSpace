@@ -101,7 +101,8 @@
              Approval Workflow Systems
              ========================= -->
         <!-- By default, DSpace uses a legacy 3-step approval workflow for new submissions -->
-        <aspect name="Original Workflow" path="resource://aspects/Workflow/" />
+	    <!--<aspect name="Original Workflow" path="resource://aspects/Workflow/" />-->
+	    <aspect name="XMLWorkflow" path="resource://aspects/XMLWorkflow/" />
 
         <!-- If you prefer, a Configurable XML-based Workflow is available. To enable it, you can
              uncomment the below aspect and comment out the "Original Workflow" aspect above.

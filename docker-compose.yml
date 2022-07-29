@@ -11,28 +11,28 @@ networks:
   dspacenet:
 services:
   dspace:
-    container_name: dspace
+    container_name: dspace-duo-test
     depends_on:
-    - dspacedb
-    image: "${DOCKER_OWNER:-dspace}/dspace:${DSPACE_VER:-dspace-6_x-jdk8-test}"
+      - dspacedb
+    image: dspace-duo-test #"${DOCKER_OWNER:-dspace}/dspace:${DSPACE_VER:-dspace-6_x-jdk8-test}"
     build:
       context: .
-      dockerfile: Dockerfile.jdk8-test
+      dockerfile: Dockerfile
     networks:
       dspacenet:
     ports:
-    - published: 8080
-      target: 8080
+      - published: 8080
+        target: 8080
     stdin_open: true
     tty: true
     volumes:
-    - ./dspace/src/main/docker-compose/local.cfg:/dspace/config/local.cfg
-    - ./dspace/src/main/docker-compose/xmlui.xconf:/dspace/config/xmlui.xconf
-    - assetstore:/dspace/assetstore
-    - solr_authority:/dspace/solr/authority/data
-    - solr_oai:/dspace/solr/oai/data
-    - solr_search:/dspace/solr/search/data
-    - solr_statistics:/dspace/solr/statistics/data
+      #- ./dspace/src/main/docker-compose/local.cfg:/dspace/config/local.cfg
+      - ./dspace/src/main/docker/xmlui.xconf:/dspace/config/xmlui.xconf
+      - assetstore:/dspace/assetstore
+      - solr_authority:/dspace/solr/authority/data
+      - solr_oai:/dspace/solr/oai/data
+      - solr_search:/dspace/solr/search/data
+      - solr_statistics:/dspace/solr/statistics/data
   dspacedb:
     container_name: dspacedb
     environment:
