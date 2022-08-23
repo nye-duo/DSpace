@@ -24,6 +24,8 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
 import org.jdom.input.SAXBuilder;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 import org.jdom.xpath.XPath;
 
 import java.io.IOException;
@@ -166,10 +168,19 @@ public class CristinOREImporter implements IngestionCrosswalk, OAIConfigurableCr
         // now, ingest the bitstreams (if necessary - this method will decide based on the config)
         Bitstream metadataBitstream = this.ingestBitstreams(context, doc, item);
 
-        // update the metadata from the metadata bundle
-        this.addMetadataFromBitstream(context, item, metadataBitstream);
-        
-        log.info("CristinOREImporter for Item "+ item.getID() + " took: " + (new Date().getTime() - timeStart.getTime()) + "ms.");
+        if(metadataBitstream == null) {
+            XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
+            String xmlString = outputter.outputString(doc);
+
+            log.error("Could not ingest metadata bitstream for " + item.getID());
+            log.error(xmlString);
+        }
+        else {
+            // update the metadata from the metadata bundle
+            this.addMetadataFromBitstream(context, item, metadataBitstream);
+
+            log.info("CristinOREImporter for Item " + item.getID() + " took: " + (new Date().getTime() - timeStart.getTime()) + "ms.");
+        }
 	}
 
     private void backupAndRemove(Context context, Item item, List<Bitstream> bitstreams)
@@ -457,5 +468,9 @@ public class CristinOREImporter implements IngestionCrosswalk, OAIConfigurableCr
         {
             throw new CrosswalkException(e);
         }
+        /*catch (AuthorizeException e) {
+            log.info("CristinOREImporter for Item "+ item.getID());
+            log.info(e);
+        }*/
     }
 }
