@@ -100,15 +100,18 @@ XML Workflow definitions which allow us to define the specific workflow used for
 
 There are two key sections to this file which we are adding to the default workflow.xml.  The first is the workflow map, which maps collections to ingest workflows:
 
+```xml
     <workflow-map>
         <name-map collection="default" workflow="default"/>
         <name-map collection="123456789/4404" workflow="cristin"/>
     </workflow-map>
+```
 
 This example maps the collection identified by the handle 123456789/4404 to the workflow id "cristin" (defined below).
 
 The workflow itself is defined by this section of the file:
-    
+
+```xml    
     <workflow start="bitstreamstep" id="cristin">
     
         <roles>
@@ -147,7 +150,8 @@ The workflow itself is defined by this section of the file:
         </step>
         
     </workflow>
-    
+```
+
 The workflow starts with the "bitstreamstep" (where the user will reorganise the bitstreams), proceeds then to the "editstep" (where the user will update the metadata) and finally to the "assignment" step (where the user will assign the item to the relevant collections).  The underlying code for each of these stages can be found configured in **spring/api/workflow-actions.xml** and **spring/xmlui/workflow-actions-xmlui.xml**.
 
 ## xmlui.conf
@@ -156,11 +160,15 @@ This file allows us to configure the Aspects used by the XML UI.  For the Duo ex
 
 Where we would originally find:
 
+```xml
     <aspect name="Original Workflow" path="resource://aspects/Workflow/" />
+```
 
 we replace it with:
 
+```xml
     <aspect name="XMLWorkflow" path="resource://aspects/XMLWorkflow/" />
+```
 
 ## spring/api/workflow-actions.xml
 
@@ -168,11 +176,14 @@ This spring configuration provides the mappings from the actions defined in **wo
 
 We first define the classes which will handle the actions:
 
+```xml
     <bean id="assignmentactionAPI" class="no.uio.duo.XmlUICollectionAssignment" scope="prototype"/>
     <bean id="bitstreamactionAPI" class="no.uio.duo.XmlUIBitstreamReorder" scope="prototype"/>
+```
 
 We can then go on and define the relationship between the action defined in **workflow.xml** and the way that the actions (shown immediately above) are invoked.  We indicate that each action requires a UI, and this will ensure that the user interface components defined in **spring/xmlui/workflow-actions-xmlui.xml** are used.
 
+```xml
     <bean id="assignmentaction" class="org.dspace.xmlworkflow.state.actions.WorkflowActionConfig" scope="prototype">
         <constructor-arg type="java.lang.String" value="assignmentaction"/>
         <property name="processingAction" ref="assignmentactionAPI"/>
@@ -184,11 +195,13 @@ We can then go on and define the relationship between the action defined in **wo
         <property name="processingAction" ref="bitstreamactionAPI"/>
         <property name="requiresUI" value="true"/>
     </bean>
+```
 
 ## spring/xmlui/workflow-actions-xmlui.xml
 
 This spring confiruation provides the user interface components which are loaded by the XML Workflow actions (defined in the previous section)
 
+```xml
     <bean id="assignmentaction_xmlui" class="no.uio.duo.XmlUICollectionAssignmentUI" scope="singleton"/>
     <bean id="bitstreamaction_xmlui" class="no.uio.duo.XmlUIBitstreamReorderUI" scope="singleton"/>
-
+```

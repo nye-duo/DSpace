@@ -627,10 +627,7 @@ public class OAIHarvester
 					}
 					else
 					{
-						List<Bundle> allBundles = item.getBundles();
-						for (Bundle bundle : allBundles) {
-							itemService.removeBundle(ourContext, item, bundle);
-						}
+						itemService.removeAllBundles(ourContext, item);
 					}
 				}
 
