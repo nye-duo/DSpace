@@ -25,15 +25,9 @@ RUN apt-get update
 
 RUN apt-get upgrade -y
 
-RUN apt-get install -y curl
+RUN apt-get install -y curl software-properties-common build-essential maven git nodejs vim ruby rubygems ruby-dev ruby-compass ruby-sass
 
-# RUN curl -fsSL https://deb.nodesource.com/setup_12.x | bash -
-
-RUN apt-get install -y software-properties-common build-essential maven git nodejs vim ruby rubygems ruby-dev ruby-compass ruby-sass
-RUN apt-add-repository -y ppa:rael-gc/rvm
-RUN apt-get update
-# RUN npm install -g grunt
-
+COPY duo /duo
 WORKDIR /app
 
 RUN useradd dspace \
@@ -48,20 +42,13 @@ RUN mkdir /install \
 ADD --chown=dspace . /app/
 COPY dspace/src/main/docker/local.cfg.DUO /app/local.cfg
 COPY dspace/src/main/docker/additions-pom.xml /app/dspace/modules/additions/pom.xml
-#COPY dspace/src/main/docker/mirage2-pom.xml /app/dspace/modules/xmlui-mirage2/pom.xml
+# COPY dspace/src/main/docker/mirage2-pom.xml /app/dspace/modules/xmlui-mirage2/pom.xml
 COPY dspace/src/main/docker/swordv2-pom.xml /app/dspace/modules/swordv2/pom.xml
 
-COPY duo /duo
-WORKDIR dspace/src/main/docker/
-
-RUN cd BagItLibrary && mvn clean package #&& mvn clean install
 RUN chown -R dspace /app
 
 USER dspace
-#RUN cp -r .ssh/ ~/.ssh/ && chmod 400 ~/.ssh/id_ed25519
-#RUN git config --global url."git@github.com:".insteadOf "https://github.com/"
 WORKDIR /app
-
 
 # Build DSpace.  Copy the dspace-install directory to /install.  Clean up the build to keep the docker image small
 # -Dmirage2.deps.included=false && \

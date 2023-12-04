@@ -36,7 +36,8 @@ services:
   dspacedb:
     container_name: dspacedb
     environment:
-      PGDATA: /pgdata
+      - PGDATA=/pgdata
+      - POSTGRES_HOST_AUTH_METHOD=trust
     image: dspace/dspace-postgres-pgcrypto
     networks:
       dspacenet:
