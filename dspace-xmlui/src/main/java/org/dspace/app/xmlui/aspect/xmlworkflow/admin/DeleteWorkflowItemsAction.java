@@ -16,16 +16,10 @@ import org.apache.cocoon.environment.SourceResolver;
 import org.dspace.app.util.Util;
 import org.dspace.app.xmlui.utils.ContextUtil;
 import org.dspace.authorize.AuthorizeException;
-import org.dspace.authorize.AuthorizeServiceImpl;
 import org.dspace.authorize.factory.AuthorizeServiceFactory;
 import org.dspace.authorize.service.AuthorizeService;
-import org.dspace.content.WorkspaceItem;
-import org.dspace.content.factory.ContentServiceFactory;
-import org.dspace.content.service.WorkspaceItemService;
 import org.dspace.core.Context;
-import org.dspace.xmlworkflow.XmlWorkflowServiceImpl;
 import org.dspace.xmlworkflow.factory.XmlWorkflowServiceFactory;
-import org.dspace.xmlworkflow.service.WorkflowRequirementsService;
 import org.dspace.xmlworkflow.service.XmlWorkflowService;
 import org.dspace.xmlworkflow.storedcomponents.XmlWorkflowItem;
 import org.dspace.xmlworkflow.storedcomponents.service.XmlWorkflowItemService;
@@ -56,7 +50,6 @@ public class DeleteWorkflowItemsAction extends AbstractAction {
         }
 
         int[] workflowIdentifiers = Util.getIntParameters(request, "workflow_id");
-        WorkflowRequirementsService workflowRequirementsService=XmlWorkflowServiceFactory.getInstance().getWorkflowRequirementsService();
 
         if(workflowIdentifiers != null){
             for (int workflowIdentifier : workflowIdentifiers) {
