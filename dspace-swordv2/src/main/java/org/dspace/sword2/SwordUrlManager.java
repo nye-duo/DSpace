@@ -143,7 +143,7 @@ public class SwordUrlManager
             else
             {
                 throw new SwordError(DSpaceUriRegistry.BAD_URL,
-                        "The item URL is invalid");
+                        "The item URL is invalid. Location: '" + location + "'\n eBaseUrl: '" + eBaseUrl + "'");
             }
 
             String iid = location.substring(cBaseUrl.length());
