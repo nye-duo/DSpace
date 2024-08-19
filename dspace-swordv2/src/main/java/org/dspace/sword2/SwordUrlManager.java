@@ -12,7 +12,6 @@ import org.dspace.content.*;
 import org.dspace.content.factory.ContentServiceFactory;
 import org.dspace.content.service.BitstreamService;
 import org.dspace.content.service.ItemService;
-import org.dspace.handle.HandleServiceImpl;
 import org.dspace.core.ConfigurationManager;
 import org.dspace.core.Context;
 import org.dspace.handle.factory.HandleServiceFactory;
@@ -123,20 +122,28 @@ public class SwordUrlManager
     {
         try
         {
+            String locationPath = new URL(location).getPath();
             String baseUrl = this.getSwordBaseUrl();
+            String basePath = new URL(baseUrl).getPath();
+
+            String emBasePath = basePath + "/edit-media/";
+            String eBasePath = basePath + "/edit/";
+            String sBasePath = basePath + "/statement/";
+
             String emBaseUrl = baseUrl + "/edit-media/";
             String eBaseUrl = baseUrl + "/edit/";
             String sBaseUrl = baseUrl + "/statement/";
             String cBaseUrl = null;
-            if (location.startsWith(emBaseUrl))
+
+            if (locationPath.startsWith(emBasePath))
             {
                 cBaseUrl = emBaseUrl;
             }
-            else if (location.startsWith(eBaseUrl))
+            else if (locationPath.startsWith(eBasePath))
             {
                 cBaseUrl = eBaseUrl;
             }
-            else if (location.startsWith(sBaseUrl))
+            else if (locationPath.startsWith(sBasePath))
             {
                 cBaseUrl = sBaseUrl;
             }
@@ -166,6 +173,9 @@ public class SwordUrlManager
             // log.error("Caught exception:", e);
             throw new DSpaceSwordException(
                     "There was a problem resolving the item", e);
+        } catch (MalformedURLException e) {
+            throw new SwordError(DSpaceUriRegistry.BAD_URL,
+                    "The item URL is invalid");
         }
     }
 
@@ -202,17 +212,22 @@ public class SwordUrlManager
         try
         {
             String baseUrl = this.getBaseCollectionUrl();
-            if (baseUrl.length() == location.length())
+            String basePath = new URL(baseUrl).getPath();
+            String locationPath = new URL(location).getPath();
+
+            if (basePath.length() == locationPath.length())
             {
                 throw new SwordError(DSpaceUriRegistry.BAD_URL,
                         "The deposit URL is incomplete");
             }
-            String handle = location.substring(baseUrl.length());
+
+            String handle = locationPath.substring(basePath.length());
             if (handle.startsWith("/"))
             {
                 handle = handle.substring(1);
             }
-            if ("".equals(handle))
+
+            if (handle.isEmpty())
             {
                 throw new SwordError(DSpaceUriRegistry.BAD_URL,
                         "The deposit URL is incomplete");
@@ -232,7 +247,7 @@ public class SwordUrlManager
 
             return (Collection) dso;
         }
-        catch (SQLException e)
+        catch (SQLException | MalformedURLException e)
         {
             // log.error("Caught exception:", e);
             throw new DSpaceSwordException(
@@ -287,13 +302,15 @@ public class SwordUrlManager
         {
             String sdBase = this.getBaseServiceDocumentUrl();
             // String mlBase = this.getBaseMediaLinkUrl();
+            String sdBasePath = new URL(sdBase).getPath();
+            String urlPath = new URL(url).getPath();
 
-            if (url.startsWith(sdBase))
+            if (urlPath.startsWith(sdBasePath))
             {
                 // we are dealing with a service document request
 
                 // first, let's find the beginning of the handle
-                url = url.substring(sdBase.length());
+                url = urlPath.substring(sdBasePath.length());
                 if (url.startsWith("/"))
                 {
                     url = url.substring(1);
@@ -325,7 +342,7 @@ public class SwordUrlManager
                                 url);
             }
         }
-        catch (SQLException e)
+        catch (SQLException | MalformedURLException e)
         {
             throw new DSpaceSwordException(e);
         }
@@ -424,9 +441,17 @@ public class SwordUrlManager
      * @throws DSpaceSwordException
      */
     public boolean isBaseServiceDocumentUrl(String url)
-            throws DSpaceSwordException
-    {
-        return this.getBaseServiceDocumentUrl().equals(url);
+            throws DSpaceSwordException {
+        String sdBasePath = null;
+        String urlPath = null;
+        try {
+            sdBasePath = new URL(this.getBaseServiceDocumentUrl()).getPath();
+            urlPath = new URL(url).getPath();
+        } catch (MalformedURLException e) {
+            return false;
+        }
+
+        return sdBasePath.equals(urlPath);
     }
 
     /**
@@ -504,14 +529,18 @@ public class SwordUrlManager
         try
         {
             String baseUrl = this.getSwordBaseUrl();
-            String emBaseUrl = baseUrl + "/edit-media/bitstream/";
-            if (!location.startsWith(emBaseUrl))
+            String basePath = new URL(baseUrl).getPath();
+            String locationPath = new URL(location).getPath();
+
+            String emBasePathUrl = basePath + "/edit-media/bitstream/";
+
+            if (!locationPath.startsWith(emBasePathUrl))
             {
                 throw new SwordError(DSpaceUriRegistry.BAD_URL,
                         "The bitstream URL is invalid");
             }
 
-            String bitstreamParts = location.substring(emBaseUrl.length());
+            String bitstreamParts = locationPath.substring(emBasePathUrl.length());
 
             // the bitstream id is the part up to the first "/"
             int firstSlash = bitstreamParts.indexOf("/");
@@ -520,7 +549,7 @@ public class SwordUrlManager
                     .findByIdOrLegacyId(context, bid);
             return bitstream;
         }
-        catch (SQLException e)
+        catch (SQLException | MalformedURLException e)
         {
             // log.error("Caught exception:", e);
             throw new DSpaceSwordException(
