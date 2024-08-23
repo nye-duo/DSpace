@@ -8,6 +8,7 @@
 package org.dspace.sword2;
 
 import org.apache.abdera.i18n.iri.IRI;
+import org.apache.log4j.Logger;
 import org.dspace.content.*;
 import org.dspace.content.factory.ContentServiceFactory;
 import org.dspace.content.service.BitstreamService;
@@ -31,6 +32,8 @@ import java.util.List;
  */
 public class SwordUrlManager
 {
+    private static Logger log = Logger.getLogger(SwordUrlManager.class);
+
     protected ItemService itemService = ContentServiceFactory.getInstance()
             .getItemService();
 
@@ -150,6 +153,7 @@ public class SwordUrlManager
             }
 
             String iid = locationPath.substring(cBasePath.length());
+            log.info("IID: " + iid);
 
             if (iid.endsWith(".atom"))
             {
