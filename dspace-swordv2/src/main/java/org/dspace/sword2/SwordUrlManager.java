@@ -129,23 +129,19 @@ public class SwordUrlManager
             String emBasePath = basePath + "/edit-media/";
             String eBasePath = basePath + "/edit/";
             String sBasePath = basePath + "/statement/";
-
-            String emBaseUrl = baseUrl + "/edit-media/";
-            String eBaseUrl = baseUrl + "/edit/";
-            String sBaseUrl = baseUrl + "/statement/";
-            String cBaseUrl = null;
+            String cBasePath = null;
 
             if (locationPath.startsWith(emBasePath))
             {
-                cBaseUrl = emBaseUrl;
+                cBasePath = emBasePath;
             }
             else if (locationPath.startsWith(eBasePath))
             {
-                cBaseUrl = eBaseUrl;
+                cBasePath = eBasePath;
             }
             else if (locationPath.startsWith(sBasePath))
             {
-                cBaseUrl = sBaseUrl;
+                cBasePath = sBasePath;
             }
             else
             {
@@ -153,7 +149,8 @@ public class SwordUrlManager
                         "The item URL is invalid");
             }
 
-            String iid = location.substring(cBaseUrl.length());
+            String iid = locationPath.substring(cBasePath.length());
+
             if (iid.endsWith(".atom"))
             {
                 // this is the atom url, so we need to strip that to ge tthe item id
