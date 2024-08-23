@@ -50,6 +50,21 @@ RUN chown -R dspace /app
 USER dspace
 WORKDIR /app
 
+RUN mvn install:install-file \
+       -Dfile=/duo/lib/bagit/bagit-2.0.jar \
+       -DgroupId=no.uio.duo \
+       -DartifactId=bagit \
+       -Dversion=2.0 \
+       -Dpackaging=jar \
+       -DgeneratePom=true
+RUN mvn install:install-file \
+       -Dfile=/duo/lib/idservice-client/idservice-client-3.0.jar \
+       -DgroupId=no.nb \
+       -DartifactId=idservice \
+       -Dversion=3.0 \
+       -Dpackaging=jar \
+       -DgeneratePom=true
+
 # Build DSpace.  Copy the dspace-install directory to /install.  Clean up the build to keep the docker image small
 # -Dmirage2.deps.included=false && \
 RUN mvn package -Dmirage2.on=true && \
