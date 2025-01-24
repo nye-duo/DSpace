@@ -18,7 +18,9 @@ import org.dspace.embargo.EmbargoSetter;
 import javax.mail.MessagingException;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -473,13 +475,25 @@ public class FSRestrictionManager
             log.info("Moved bitstream " + bs.getID() + " from " + DuoConstants.ORIGINAL_BUNDLE + " to " + DuoConstants.ADMIN_BUNDLE + " for item " + item.getID());
         }
 
+        // Very carefully obtaining and iterating through a list of bundles
+        // to avoid ConcurrentModification
+        List<Bundle> bundlesToRemove = new ArrayList<>();
         for (Bundle bundle : item.getBundles())
         {
             if (bundle.getBitstreams().size() == 0)
             {
-                itemService.removeBundle(context, item, bundle);
+                bundlesToRemove.add(bundle);
             }
         }
+
+        Iterator<Bundle> bundleIterator = bundlesToRemove.iterator();
+        while (bundleIterator.hasNext())
+        {
+            Bundle bundle = bundleIterator.next();
+            itemService.removeBundle(context, item, bundle);
+        }
+
+
     }
 
     /**
